@@ -1,0 +1,57 @@
+<if condition="$c neq 'index'">
+<div id="sub-menu" class="sub-menu">
+    <if condition="$c eq 'wechat'">
+        <div class="header">
+            <h3>微信管理</h3>
+            <article>在这里设置微信公众号的菜单、关键词回复、图文内容等。</article>
+        </div>
+        <ul class="sub-menu-list">
+            <li class="{$a == 'setting' ? 'active' : ''}">
+                <a href="{:U('Wechat/setting')}">
+                    <i class="fa fa-cog" aria-hidden="true"></i>
+                    公众号信息
+                </a>
+            </li>
+            <li class="{$a == 'menu' ? 'active' : ''}">
+                <a href="{:U('Wechat/menu')}">
+                    <i class="fa fa-bars" aria-hidden="true"></i>
+                    微信菜单
+                </a>
+            </li>
+            <li class="{$a == 'reply' ? 'active' : ''}">
+                <a href="{:U('Wechat/reply')}">
+                    <i class="fa fa-commenting" aria-hidden="true"></i>
+                    自动回复
+                </a>
+            </li>
+            <li class="{$a == 'users' ? 'active' : ''}">
+                <a href="{:U('Wechat/users')}">
+                    <i class="fa fa-users" aria-hidden="true"></i>
+                    用户管理
+                </a>
+            </li>
+        </ul>
+
+    <elseif condition="$c eq 'user'" />
+        <div class="header">
+            <h3>账户中心</h3>
+            <article>在这里可以修改个人信息设置。</article>
+        </div>
+        <ul class="sub-menu-list">
+            <li class="{$a == 'index' ? 'active' : ''}">
+                <a href="{:U('User/index')}">
+                    <i class="fa fa-cog" aria-hidden="true"></i>
+                    个人信息
+                </a>
+            </li>
+            <li class="{$a == 'account' ? 'active' : ''}">
+                <a href="{:U('User/account')}">
+                    <i class="fa fa-users" aria-hidden="true"></i>
+                    账号管理
+                </a>
+            </li>
+        </ul>
+
+    </if>
+</div>
+</if>

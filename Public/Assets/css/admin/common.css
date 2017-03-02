@@ -2,21 +2,23 @@
 /**********************
  * 基础设置
  *********************/
-html, body, img { height: 100%; width: 100%; }
-dl { margin: 0 auto 10px; }
-dt, dd { display: inline-block; }
-ul, ol {
-    display: block;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-a, a:hover, a:active, a:visited, a:focus {
-    color: inherit;
-    text-decoration: none;
-}
-img.qrcode { width: 140px; height: 140px; }
-form label .required { color: #f00; }
+*{outline:none;}
+html,body{height:100%;width:100%;}
+dl{margin:0 auto 10px;}
+dt,dd{display:inline-block;}
+ul,ol{margin:0;padding:0;}
+form label .required{color:#f00;}
+table{margin-top:25px;}
+table tr.empty{display:none;text-align:center;background-color:#fcf8e3;}
+table tr.empty:only-child{display:table-row;}
+tbody>tr:last-child>td{border-bottom:2px solid #ddd;}
+table td .btn + .btn{margin-left:.5em;}
+a,a:hover,a:active,a:focus,a:visited{text-decoration:none;color: inherit;}
+[v-cloak]{display:none !important;}
+.loading{position:fixed;top:0;left:0;right:0;bottom:0;background-color:rgba(0,0,0,.07);z-index:100;}
+.loading img{position:absolute;width:40px;height:40px;top:40%;left:50%;}
+form .title{margin-top:10px;text-align:center;}
+.absolute{position:absolute;top:0;left:0;bottom:0;right:0;}
 table caption {
     color: #000;
     text-align: center;
@@ -24,7 +26,7 @@ table caption {
     font-weight: bold;
     padding: .7em 1em .5em;
 }
-table tr.empty { display: none; }
+table tr.empty {display:none;}
 table tr.empty:only-child {
     display: table-row;
     text-align: center;
@@ -33,27 +35,64 @@ table tr.empty:only-child {
     -o-animation: warn .8s ease .5s 3 alternate;
     animation: warn .8s ease .5s 3 alternate;
 }
-table td button + button { margin-left: .5em; }
-tfoot { text-align: center; }
-.checkbox label + label { margin-left: 2.5em; }
+table td button + button{margin-left:.5em;}
+.checkbox label + label{margin-left:2.5em;}
+.btn-user{margin-left:1em;}
 
-.fast-animated {
-    -webkit-animation-duration: .5s;
-    animation-duration: .5s;
-    -webkit-animation-fill-mode: both;
-    animation-fill-mode: both;
+
+/* bootstrap 修改 */
+.form-group .help-block{margin-bottom:0;}
+.bg-warning,.bg-success,.bg-info{padding:15px;}
+.btn.active.focus, .btn.active:focus,
+.btn.focus, .btn:active.focus,
+.btn:active:focus, .btn:focus {
+    outline: thin dotted;
+    outline: 1px auto -webkit-focus-ring-color;
+    outline-offset: -3px;
 }
-.notice {
-    font-size: 10px;
-    color: #31708f;
-    margin-bottom: 0;
-}
-.bg-warning, .bg-success, .bg-info { padding: 15px; }
-.btn-user { margin-left: 1em; }
+.input-group .form-control{z-index:initial;}
+body > .modal-backdrop{z-index: 1039;}
+form .control-label.required:after{content:'*';position:absolute;color:#f00;margin-left:3px;font-size:1.3em;}
+.bg-warning, .bg-success, .bg-info{padding:15px;}
 .input-group-addon:not(:first-child):not(:last-child) {
     border-left: 0;
     border-right: 0;
 }
+
+
+/* wangEditor 编辑器修改 */
+.wangEditor-container{border-radius:.3em;}
+.wangEditor-menu-container{border-radius:.3em .3em 0 0;}
+
+
+/* 弹出式表单 */
+.fixed-form {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,.3);
+    z-index: 99;
+}
+.fixed-form form {
+    position: fixed;
+    top: 90px;
+    left: 50%;
+    width: 360px;
+    padding: 0 20px 5px;
+    -webkit-transform: translateX(-50%);
+    -moz-transform: translateX(-50%);
+    -ms-transform: translateX(-50%);
+    -o-transform: translateX(-50%);
+    transform: translateX(-50%);
+    background-color: #fff;
+    border-radius: 5px;
+    -webkit-box-shadow: 0 0 4px 1px rgba(0,0,0,.2);
+    -moz-box-shadow: 0 0 4px 1px rgba(0,0,0,.2);
+    box-shadow: 0 0 4px 1px rgba(0,0,0,.2);
+}
+.fixed-form form .btn + .btn{margin-left:8px;}
 
 .card {
     display: block;
@@ -133,9 +172,9 @@ tfoot { text-align: center; }
     box-shadow: 0 0 3px 1px rgba(0,0,0,.1);
     z-index: 19;
 }
-.hover-img:hover + img { display: block; }
+.hover-img:hover + img{display:block;}
 
-.check-input { display: none; }
+.check-input{display:none;}
 .check-label {
     text-align: center;
     border: 1px solid #ddd;
@@ -143,15 +182,15 @@ tfoot { text-align: center; }
     font-weight: normal;
     transition: all .2s ease;
 }
-.check-label:first-of-type { border-right: none; }
-.check-label:last-of-type { border-left: none; }
+.check-label:first-of-type{border-right:none;}
+.check-label:last-of-type{border-left:none;}
 .check-input:checked + .check-label {
     color: #fff;
     background-color: #337ab7;
     border-color: #337ab7;
 }
 
-.radio label { margin-right: 2em; }
+.radio label{margin-right:2em;}
 
 
 /* 动画 */

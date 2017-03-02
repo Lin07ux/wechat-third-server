@@ -1,14 +1,15 @@
 DROP INDEX `unique_index_users_openid` ON `wts_users`;
 DROP INDEX `unique_index_users_phone` ON `wts_users`;
 
-DROP TABLE `wts_admins`;
+DROP TABLE `wts_admin`;
 DROP TABLE `wts_users`;
 
-CREATE TABLE `wts_admins` (
+CREATE TABLE `wts_admin` (
 	`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '管理员 ID',
 	`account` varchar(255) NOT NULL COMMENT '登录账户',
 	`password` varchar(255) NOT NULL COMMENT '登录密码 sha1',
 	`name` varchar(255) NOT NULL COMMENT '用户姓名',
+	`super_admin` tinyint(1) UNSIGNED NOT NULL COMMENT '是否是超级管理员(1是，0不是)',
 	`crt_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
 	`upd_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
 	PRIMARY KEY (`id`)

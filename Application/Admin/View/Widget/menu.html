@@ -1,0 +1,20 @@
+<ul id="menu" class="side-menu">
+    <li class="{$c == 'index' ? 'active' : ''}">
+        <a href="{:U('Index/index')}">
+            <i class="fa fa-tachometer" aria-hidden="true"></i>
+            <span>概览</span>
+        </a>
+    </li>
+    <li class="{$c == 'wechat' ? 'active' : ''}">
+        <a href="{:U('Wechat/index')}">
+            <i class="fa fa-weixin" aria-hidden="true"></i>
+            <span>微信</span>
+        </a>
+    </li>
+    <li class="{$c == 'user' ? 'active' : ''}">
+        <a href="{:U('User/index')}">
+            <i class="fa fa-user" aria-hidden="true"></i>
+            <span>我</span>
+        </a>
+    </li>
+</ul>

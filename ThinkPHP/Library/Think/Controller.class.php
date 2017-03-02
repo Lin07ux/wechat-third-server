@@ -23,7 +23,7 @@ abstract class Controller {
 
     /**
      * 控制器参数
-     * @var config
+     * @var array
      * @access protected
      */      
     protected $config   =   array();
@@ -104,7 +104,7 @@ abstract class Controller {
      * 模板主题设置
      * @access protected
      * @param string $theme 模版主题
-     * @return Action
+     * @return $this
      */
     protected function theme($theme){
         $this->view->theme($theme);
@@ -116,7 +116,7 @@ abstract class Controller {
      * @access protected
      * @param mixed $name 要显示的模板变量
      * @param mixed $value 变量的值
-     * @return Action
+     * @return $this
      */
     protected function assign($name,$value='') {
         $this->view->assign($name,$value);

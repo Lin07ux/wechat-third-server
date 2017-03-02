@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh_CN">
+<head>
+    <meta charset="UTF-8">
+    <title>{$title} - 微信公众号后台管理</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <include file="Widget/style" />
+</head>
+<body>
+    <!-- 头部导航栏 -->
+    <header class="navbar navbar-fixed-top">
+        <a href="{:U('index/index')}" class="logo">
+            <img src="/Assets/images/logo.png" alt="Logo">
+        </a>
+        <h3 class="title">{$title}</h3>
+        <div class="user">
+            <span>欢迎您,</span>
+            <span class="name">{$user.name}</span>
+            <a href="{:U('User/logout')}" class="logout">[注销]</a>
+        </div>
+    </header>
+
+    <main id="content" class="header-fix">
+        <!-- 侧边栏菜单 -->
+        <include file="Widget/menu" />
+
+        <!-- 侧边栏子菜单 -->
+        <include file="Widget/menu.sub" />
+
+        <div class="content">
+
+            {__CONTENT__}
+
+        </div>
+    </main>
+
+    <!--<footer class="container">华泰一媒 版权所有 © 2013-2016</footer>-->
+
+    <script src="/Assets/js/lib/vue.js"></script>
+    <!--<script src="/Assets/js/lib/vue.min.js"></script>-->
+    <script src="/Assets/js/lib/vue-resource.min.js"></script>
+    <notempty name="load_script">
+        <foreach name="load_script" item="script">
+            <script src="{$script}"></script>
+        </foreach>
+    </notempty>
+</body>
+</html>

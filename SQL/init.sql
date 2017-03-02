@@ -1,0 +1,2 @@
+INSERT INTO `wts_admin` (`account`, `password`, `name`, `super_admin`) VALUE ('1@qq.com', '10470c3b4b1fed12c3baac014be15fac67c6e815', '林云溪', 1);
+INSERT INTO `wts_admin` (`account`, `password`, `name`, `super_admin`) VALUE ('2@qq.com', '10470c3b4b1fed12c3baac014be15fac67c6e815', '林非', 0);

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{$title} - {$Think.config.WEBSITE_NAME}</title>
+
+    <link rel="stylesheet" href="/Assets/css/lib/bootstrap.min.css">
+    <style rel="stylesheet">
+        body{position:fixed;top:0;left:0;right:0;bottom:0;font-size:14px;text-align:center;overflow:hidden;}
+        body::before {content: ' ';position:absolute;top:-10%;left:-10%;width:120%;height:120%;background:url('/Assets/images/admin/bg-login.jpg')center center no-repeat;-webkit-filter:blur(5px);filter:blur(5px);}
+        main{position:absolute;top:50%;left:50%;width:300px;height:240px;margin-top:-150px;margin-left:-150px;}
+        form{padding:1.2em;}
+        .form-control{background-color:rgba(235,239,215,0.24);}
+        form button[type='submit']{outline:none !important;}
+        form a{margin:.5em;}
+    </style>
+</head>
+<body>
+<main>
+    <form action="{:U('User/login')}" method="post" id="login">
+        <h3>登录账户</h3>
+        <input type="hidden" id="redirectUrl" value="{$redirect}">
+
+        <div class="form-group">
+            <label class="sr-only" for="account">账户</label>
+            <div>
+                <input type="text" name="account" class="form-control" id="account" data-msg="请输入登录账号" placeholder="账户名/邮箱/手机号" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="sr-only" for="password">密码</label>
+            <div>
+                <input type="password" name="password" class="form-control" id="password" data-msg="请输入密码" placeholder="密码" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="btn btn-info btn-block">登 录</button>
+        </div>
+
+        <!--<div class="form-group">
+            <a href="#">忘记密码?</a> |
+            <a href="{:U('register')}">我要注册</a>
+        </div>-->
+    </form>
+</main>
+
+<script type="text/javascript" src="/Assets/js/lib/jquery.min.js"></script>
+<script>
+    $(function(){
+        $('#login').on('submit', function(e){
+            e.preventDefault();
+
+            // 检查表单所需数据是否完成
+            if (!checkForm($(this))) return false;
+
+            $.ajax({
+                url: $(this).attr('action'),
+                method: 'POST',
+                dataType: 'json',
+                data: $(this).serialize()
+            })
+            .done(function(res) {
+                if (res.code) {
+                    alert(res.msg);
+                    $('#account').focus();
+                } else {
+                    window.location.replace($('#redirectUrl').val());
+                }
+            })
+            .fail(function() { alert('网络故障，请稍后重试'); });
+
+            return false;
+        });
+
+        // 检查表单数据是否合法
+        function checkForm(obj) {
+            var flag = true;
+
+            $(obj).find(':required').each(function(){
+                if (!$(this).val()) {
+                    alert( $(this).attr('data-msg') || '请完善表单' );
+                    $(this).focus();
+                    flag = false;
+                    return false;
+                }
+            });
+
+            return flag;
+        }
+    });
+</script>
+</body>
+</html>
