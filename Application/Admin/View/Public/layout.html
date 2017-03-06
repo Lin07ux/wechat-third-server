@@ -2,33 +2,33 @@
 <html lang="zh_CN">
 <head>
     <meta charset="UTF-8">
-    <title>{$title} - 微信公众号后台管理</title>
+    <title>{$title} - {$Think.config.WECHAT.NAME}后台管理</title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <include file="Widget/style" />
 </head>
-<body>
+<body class="row flex-column">
     <!-- 头部导航栏 -->
-    <header class="navbar navbar-fixed-top">
+    <header class="top-nav row">
         <a href="{:U('index/index')}" class="logo">
             <img src="/Assets/images/logo.png" alt="Logo">
         </a>
-        <h3 class="title">{$title}</h3>
+        <h3 class="col title">{$title}</h3>
         <div class="user">
             <span>欢迎您,</span>
-            <span class="name">{$user.name}</span>
+            <span class="name">{$Think.session.user.name}</span>
             <a href="{:U('User/logout')}" class="logout">[注销]</a>
         </div>
     </header>
 
-    <main id="content" class="header-fix">
+    <main class="col row content-wrap">
         <!-- 侧边栏菜单 -->
         <include file="Widget/menu" />
 
         <!-- 侧边栏子菜单 -->
         <include file="Widget/menu.sub" />
 
-        <div class="content">
+        <div class="col content">
 
             {__CONTENT__}
 

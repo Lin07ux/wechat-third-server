@@ -1,2 +1,3 @@
 .phpstorm.meta.php
 */Runtime/
+/Public/Uploads/*

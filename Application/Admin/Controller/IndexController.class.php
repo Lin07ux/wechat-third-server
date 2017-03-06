@@ -7,6 +7,7 @@ class IndexController extends CommonController
 {
     public function index()
     {
-        echo 'admin';
+        $this->assign('title', '概览')
+            ->display();
     }
 }

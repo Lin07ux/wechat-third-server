@@ -1,0 +1,167 @@
+<layout name="Public/layout" />
+
+<link rel="stylesheet" href="/Assets/wangEditor/wangEditor.min.css">
+
+<div class="articles" id="articles" v-cloak>
+    <div class="lists" v-show="!showForm">
+        <div class="row align-items-center dividing">
+            <span class="col">所有文章 <small>(总数 {{ articles.total }})</small></span>
+            <button class="btn btn-primary" @click="add">新建文章</button>
+        </div>
+
+        <table class="table table-hover">
+            <thead>
+            <tr class="row">
+                <th class="col-sm-1">#</th>
+                <th class="col-sm-4">文章标题</th>
+                <th class="col-sm-4">文章 URL</th>
+                <th class="col-sm-1">类型</th>
+                <th class="col-sm-2">操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-if="!articles.total">
+                <td colspan="5" class="text-muted text-center">暂无文章。可点击上方的“新建文章”进行添加。</td>
+            </tr>
+            <tr class="row" v-for="(article, index) in articles.lists">
+                <th class="col-sm-1">{{ index + 1 }}</th>
+                <td class="col-sm-4">{{ article.title }}</td>
+                <td class="col-sm-4 word-wrap">{{ article.url }}</td>
+                <td class="col-sm-1">{{ article.type > 0 ? '原创' : '外链' }}</td>
+                <td class="col-sm-2">
+                    <button class="btn btn-sm btn-info" @click="edit(article)">编辑</button>
+                    <button class="btn btn-sm btn-danger" @click="remove(index)">删除</button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="paging" v-if="articles.pages">
+            <button type="button" class="btn btn-secondary btn-sm" @click="prevPage">
+                <i class="fa fa-angle-double-left"></i>
+                上一页
+            </button>
+            <input type="number" class="form-control form-control-sm page" min="1" :max="articles.pages" v-model.number="articles.page" @keyup.enter="page">
+            /
+            <span>{{ articles.pages }}</span>
+            <button type="button" class="btn btn-secondary btn-sm" @click="nextPage">
+                <i class="fa fa-angle-double-right"></i>
+                下一页
+            </button>
+        </div>
+    </div>
+
+    <form class="main" method="post" v-show="showForm" @submit.prevent="submit">
+        <h3 class="title" v-text="form.id ? '编辑文章' : '新建文章'"></h3>
+
+        <div class="form-group row">
+            <label for="title" class="col-sm-2 col-form-label required">文章标题</label>
+            <div class="col-sm-10">
+                <input type="text" class="form-control" id="title" v-model="form.title" placeholder="设置文章的标题" required>
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label for="desc" class="col-sm-2 col-form-label required">文章描述</label>
+            <div class="col-sm-10">
+                <textarea class="form-control" id="desc" rows="2" v-model="form.desc" placeholder="简单描述文章内容" required></textarea>
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label required">封面图片</label>
+            <div class="col-sm-10">
+                <div class="row">
+                    <div class="col">
+                        <div
+                            class="upload cover"
+                            :class="{ done: form.cover, uploading: loadCover }"
+                            :style="{ 'background-image': 'url(' + form.cover + ')' }"
+                        >
+                            <input type="file" class="absolute" accept="image/jpeg,image/jpg,image/png" @change="upload($event, true)">
+                            <i class="fa fa-file-image-o" v-show="!form.cover"></i>
+                        </div>
+                        <small class="form-text text-center text-muted">封面大图</small>
+                    </div>
+
+                    <div class="col">
+                        <div
+                            class="upload thumb"
+                            :class="{ done: form.thumb, uploading: loadThumb }"
+                            :style="{ 'background-image': 'url(' + form.thumb + ')' }"
+                        >
+                            <input type="file" class="absolute" accept="image/jpeg,image/jpg,image/png" @change="upload($event)">
+                            <i class="fa fa-file-image-o"  v-show="!form.thumb"></i>
+                        </div>
+                        <small class="form-text text-center text-muted">封面小图</small>
+                    </div>
+                </div>
+
+                <div class="col form-text text-muted small">
+                    <p>1. 图片格式：jpg、jpeg、png。大小不超过 2M。</p>
+                    <p>2. 封面大图主要用于文章列表中的封面和图文消息中的大图。<strong>必须设置</strong>。建议尺寸：900px * 500px。</p>
+                    <p>3. 封面小图主要用于多图文消息中右侧的小图。<strong>可以不设置</strong>。建议尺寸：200px * 200px。</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label required">文章类型</label>
+            <div class="col-sm-10">
+                <div class="form-check form-check-inline">
+                    <label class="radio-inline">
+                        <input type="radio" name="type" value="0" v-model.number="form.type">
+                        外链文章
+                    </label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <label class="radio-inline">
+                        <input type="radio" name="type" value="1" v-model.number="form.type">
+                        原创文章
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group row" v-show="0 == form.type">
+            <label for="link" class="col-sm-2 col-form-label required">原文链接</label>
+            <div class="col-sm-10">
+                <input type="url" class="form-control" id="link" v-model="form.link" placeholder="文章的原始链接" :required="0 == form.type">
+            </div>
+        </div>
+
+        <div class="form-group row" v-show="1 == form.type">
+            <label for="article-content" class="col-sm-2 col-form-label required">文章内容</label>
+            <div class="col-sm-10">
+                <textarea id="article-content" class="form-control" rows="10" placeholder="填写文章内容" style="height:320px;"></textarea>
+            </div>
+        </div>
+
+        <div class="form-group text-center">
+            <button type="submit" class="btn btn-success">保存</button>
+            <button type="reset" class="btn btn-default" @click="showForm = false">取消</button>
+        </div>
+    </form>
+
+    <div class="loading bg-mask" v-show="loading">
+        <div class="wrap">
+            <img src="/Assets/images/loading.svg">
+            <small class="load-msg">{{ loadMsg }}</small>
+        </div>
+    </div>
+</div>
+
+
+<assign name="load_script[]" value="/Assets/js/lib/jquery.min.js" />
+<assign name="load_script[]" value="/Assets/wangEditor/wangEditor.min.js" />
+<assign name="load_script[]" value="/Assets/js/admin/wechat/articles.js" />
+<script>
+    var urls = {
+        lists: "{:U('Article/lists')}",
+        add: "{:U('Article/add')}",
+        edit: "{:U('Article/edit')}",
+        remove: "{:U('Article/remove')}",
+        detail: "{:U('Article/detail')}",
+        upload: "{:U('Article/upload')}"
+    };
+</script>

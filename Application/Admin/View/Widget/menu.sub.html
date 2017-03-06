@@ -5,17 +5,11 @@
             <h3>微信管理</h3>
             <article>在这里设置微信公众号的菜单、关键词回复、图文内容等。</article>
         </div>
-        <ul class="sub-menu-list">
-            <li class="{$a == 'setting' ? 'active' : ''}">
-                <a href="{:U('Wechat/setting')}">
-                    <i class="fa fa-cog" aria-hidden="true"></i>
-                    公众号信息
-                </a>
-            </li>
+        <ul>
             <li class="{$a == 'menu' ? 'active' : ''}">
                 <a href="{:U('Wechat/menu')}">
                     <i class="fa fa-bars" aria-hidden="true"></i>
-                    微信菜单
+                    自定义菜单
                 </a>
             </li>
             <li class="{$a == 'reply' ? 'active' : ''}">
@@ -24,10 +18,16 @@
                     自动回复
                 </a>
             </li>
-            <li class="{$a == 'users' ? 'active' : ''}">
-                <a href="{:U('Wechat/users')}">
+            <li class="{$a == 'user' ? 'active' : ''}">
+                <a href="{:U('Wechat/user')}">
                     <i class="fa fa-users" aria-hidden="true"></i>
                     用户管理
+                </a>
+            </li>
+            <li class="{$a == 'article' ? 'active' : ''}">
+                <a href="{:U('Wechat/article')}">
+                    <i class="fa fa-file-text" aria-hidden="true"></i>
+                    文章管理
                 </a>
             </li>
         </ul>
@@ -37,7 +37,7 @@
             <h3>账户中心</h3>
             <article>在这里可以修改个人信息设置。</article>
         </div>
-        <ul class="sub-menu-list">
+        <ul>
             <li class="{$a == 'index' ? 'active' : ''}">
                 <a href="{:U('User/index')}">
                     <i class="fa fa-cog" aria-hidden="true"></i>

@@ -1,8 +1,14 @@
+ALTER TABLE `wts_menus` DROP FOREIGN KEY `fk_wts_menus_wts_reply_1`;
+
 DROP INDEX `unique_index_users_openid` ON `wts_users`;
 DROP INDEX `unique_index_users_phone` ON `wts_users`;
+DROP INDEX `index_wx_reply_type` ON `wts_reply`;
 
 DROP TABLE `wts_admin`;
 DROP TABLE `wts_users`;
+DROP TABLE `wts_reply`;
+DROP TABLE `wts_menus`;
+DROP TABLE `wts_articles`;
 
 CREATE TABLE `wts_admin` (
 	`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '管理员 ID',
@@ -42,4 +48,56 @@ CREATE TABLE `wts_users` (
 	UNIQUE INDEX `unique_index_users_phone` (`phone` ASC) COMMENT '用户手机号唯一索引'
 )
 	COMMENT = '用户表';
+
+CREATE TABLE `wts_reply` (
+	`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '回复ID',
+	`type` tinyint(3) UNSIGNED NOT NULL COMMENT '回复类型(0 关注回复; 1 自动回复; 2 关键字回复；3 菜单点击回复)',
+	`msg_type` tinyint(3) UNSIGNED NOT NULL COMMENT '消息类型(0 文本; 1 图片; 2 图文)',
+	`keyword` varchar(255) NULL COMMENT '关键字',
+	`content` varchar(255) NULL COMMENT '回复的文本内容或描述信息',
+	`media_id` char(50) NULL COMMENT '微信素材ID',
+	`title` varchar(255) NULL COMMENT '消息标题',
+	`music` varchar(255) NULL COMMENT '音乐链接',
+	`hq_music` varchar(255) NULL COMMENT '高质量音乐链接',
+	`thumb` char(50) NULL COMMENT '缩略图的媒体素材ID',
+	`news` varchar(255) NULL COMMENT '图文消息的文章ID集合(英文逗号分隔)',
+	`crt_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+	`upd_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+	PRIMARY KEY (`id`) ,
+	INDEX `index_wx_reply_type` (`type` ASC) COMMENT '回复类型索引'
+)
+	COMMENT = '微信自动回复';
+
+CREATE TABLE `wts_menus` (
+	`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '序号',
+	`ordering` tinyint(3) UNSIGNED NOT NULL DEFAULT 0 COMMENT '排列次序',
+	`name` varchar(8) NOT NULL COMMENT '菜单名称',
+	`type` tinyint(2) UNSIGNED NOT NULL DEFAULT 0 COMMENT '菜单类型(0 一级；1 链接；2 回复)',
+	`view` varchar(255) NULL DEFAULT NULL COMMENT '跳转网址',
+	`reply` int(11) UNSIGNED NULL DEFAULT NULL COMMENT '回复信息的ID',
+	`parent` integer(11) UNSIGNED NULL DEFAULT NULL COMMENT '父级菜单ID(二级菜单需要)',
+	`crt_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+	`upd_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+	PRIMARY KEY (`id`)
+)
+	COMMENT = '微信自定义菜单';
+
+CREATE TABLE `wts_articles` (
+	`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '文章ID',
+	`type` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '文章类型(0 外链；1内容)',
+	`title` varchar(255) NOT NULL COMMENT '文章名称',
+	`cover` varchar(255) NOT NULL COMMENT '文章封面大图',
+	`thumb` varchar(255) NULL COMMENT '标题小图(用于多图文消息的右侧)',
+	`desc` varchar(255) NOT NULL COMMENT '文章描述',
+	`link` varchar(255) NULL COMMENT '文章外链URL',
+	`url` varchar(255) NULL COMMENT '文章的url',
+	`content` text NULL COMMENT '文章内容',
+	`crt_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+	`upd_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+	PRIMARY KEY (`id`)
+)
+	COMMENT = '文章表';
+
+
+ALTER TABLE `wts_menus` ADD CONSTRAINT `fk_wts_menus_wts_reply_1` FOREIGN KEY (`reply`) REFERENCES `wts_reply` (`id`);
 

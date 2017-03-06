@@ -3,7 +3,7 @@
 <div id="user" v-cloak>
     <p class="bg-success">欢迎您，{$Think.session.user.name}</p>
 
-    <button class="btn btn-default" @click.prevent="form.show = true">修改密码</button>
+    <button class="btn btn-secondary" @click.prevent="form.show = true">修改密码</button>
 
     <div class="fixed-form" v-show="form.show" @click.self="form.show = false">
         <form action="{:U('User/resetPwd')}" @submit.prevent="submit">
