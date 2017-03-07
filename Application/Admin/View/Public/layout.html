@@ -37,6 +37,35 @@
 
     <!--<footer class="container">华泰一媒 版权所有 © 2013-2016</footer>-->
 
+    <script>
+        // Object.assign Polyfill
+        if (typeof Object.assign != 'function') {
+            Object.assign = function(target, varArgs) {
+                'use strict';
+                if (target == null) { // TypeError if undefined or null
+                    throw new TypeError('Cannot convert undefined or null to object');
+                }
+
+                var to = Object(target);
+                var length = arguments.length;
+
+                for (var index = 1; index < length; index++) {
+                    var nextSource = arguments[index];
+
+                    if (nextSource != null) { // Skip over if undefined or null
+                        for (var nextKey in nextSource) {
+                            // Avoid bugs when hasOwnProperty is shadowed
+                            if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+                                to[nextKey] = nextSource[nextKey];
+                            }
+                        }
+                    }
+                }
+
+                return to;
+            };
+        }
+    </script>
     <script src="/Assets/js/lib/vue.js"></script>
     <!--<script src="/Assets/js/lib/vue.min.js"></script>-->
     <script src="/Assets/js/lib/vue-resource.min.js"></script>

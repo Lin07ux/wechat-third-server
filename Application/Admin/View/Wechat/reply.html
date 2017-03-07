@@ -1,0 +1,313 @@
+<layout name="Public/layout" />
+
+<div class="main wx-reply" id="reply" v-cloak>
+    <ul class="nav nav-tabs">
+        <li class="nav-item">
+            <span class="nav-link" :class="{ active: tab == 'subscribe'}" @click="tab = 'subscribe'">关注回复</span>
+        </li>
+        <li class="nav-item">
+            <span class="nav-link" :class="{ active: tab == 'auto'}" @click="tab = 'auto'">自动回复</span>
+        </li>
+        <li class="nav-item">
+            <span class="nav-link" :class="{ active: tab == 'keyword'}" @click="tab = 'keyword'">关键词回复</span>
+        </li>
+    </ul>
+
+    <div class="tab-pane subscribe" v-show="tab == 'subscribe'">
+        <div class="btn-group mb-2">
+            <button type="button" class="btn" :class="{ 'btn-primary active': isText(subscribe.msg_type), 'btn-secondary': !isText(subscribe.msg_type) }" @click="subscribe.msg_type = 0">文本</button>
+            <button type="button" class="btn" :class="{ 'btn-primary active': isPic(subscribe.msg_type), 'btn-secondary': !isPic(subscribe.msg_type) }" @click="subscribe.msg_type = 1">图片</button>
+            <button type="button" class="btn" :class="{ 'btn-primary active': isNews(subscribe.msg_type), 'btn-secondary': !isNews(subscribe.msg_type) }" @click="subscribe.msg_type = 2">图文</button>
+        </div>
+
+        <div>
+            <textarea class="form-control" rows="10" placeholder="填写关注回复内容" v-model="subscribe.content" v-show="isText(subscribe.msg_type)"></textarea>
+
+            <div v-show="isPic(subscribe.msg_type)">
+                <p class="bg-warning">图片消息暂不支持</p>
+            </div>
+
+            <ul class="card wx-news" v-show="isNews(subscribe.msg_type)">
+                <li class="article"
+                    :class="{ only: subscribe.news.length == 1 }"
+                    v-for="(article, index) in subscribe.news"
+                >
+                    <template v-if="subscribe.news.length == 1">
+                        <h4 class="title">{{ article.title }}</h4>
+                        <div class="cover" :style="{ backgroundImage: 'url(' + article.cover + ')' }"></div>
+                        <p class="desc">{{ article.desc }}</p>
+                    </template>
+
+                    <template v-else>
+                        <div class="cover"
+                             v-if="index < 1"
+                             :style="{ backgroundImage: 'url(' + article.cover + ')' }"
+                        >
+                            <p class="title">{{ article.title }}</p>
+                        </div>
+                        <div v-else class="other">
+                            <p class="title">{{ article.title }}</p>
+                            <img class="thumb" :src="article.thumb">
+                        </div>
+                    </template>
+
+                    <i class="fa fa-close" @click="subscribe.news.splice(index, 1)"></i>
+                </li>
+                <li class="article bg-plus"
+                    v-if="subscribe.news.length < 8"
+                    @click="showSearch(subscribe.news)"
+                ></li>
+            </ul>
+        </div>
+
+        <div class="mt-2">
+            <button type="button" class="btn btn-success" @click="setReply(subscribe)">保存设置</button>
+            <button type="button" class="btn" :class="{ 'btn-danger': subscribe.is_set }" :disabled="!subscribe.is_set" @click="delReply(subscribe)">删除回复</button>
+        </div>
+    </div>
+
+    <div class="tab-pane" v-show="tab == 'auto'">
+        <div class="btn-group mb-2">
+            <button type="button" class="btn" :class="{ 'btn-primary active': isText(auto.msg_type), 'btn-secondary': !isText(auto.msg_type) }" @click="auto.msg_type = 0">文本</button>
+            <button type="button" class="btn" :class="{ 'btn-primary active': isPic(auto.msg_type), 'btn-secondary': !isPic(auto.msg_type) }" @click="auto.msg_type = 1">图片</button>
+            <button type="button" class="btn" :class="{ 'btn-primary active': isNews(auto.msg_type), 'btn-secondary': !isNews(auto.msg_type) }" @click="auto.msg_type = 2">图文</button>
+        </div>
+
+        <div>
+            <textarea class="form-control" rows="10" placeholder="填写关注回复内容" v-model="auto.content" v-show="isText(auto.msg_type)"></textarea>
+
+            <div v-show="isPic(auto.msg_type)">
+                <p class="bg-warning">图片消息暂不支持</p>
+            </div>
+
+            <ul class="card wx-news" v-show="isNews(auto.msg_type)">
+                <li class="article"
+                    :class="{ only: auto.news.length == 1 }"
+                    v-for="(article, index) in auto.news"
+                >
+                    <template v-if="auto.news.length == 1">
+                        <h4 class="title">{{ article.title }}</h4>
+                        <div class="cover" :style="{ backgroundImage: 'url(' + article.cover + ')' }"></div>
+                        <p class="desc">{{ article.desc }}</p>
+                    </template>
+
+                    <template v-else>
+                        <div class="cover"
+                             v-if="index < 1"
+                             :style="{ backgroundImage: 'url(' + article.cover + ')' }"
+                        >
+                            <p class="title">{{ article.title }}</p>
+                        </div>
+                        <div v-else class="other">
+                            <p class="title">{{ article.title }}</p>
+                            <img class="thumb" :src="article.thumb">
+                        </div>
+                    </template>
+
+                    <i class="fa fa-close" @click="auto.news.splice(index, 1)"></i>
+                </li>
+                <li class="article bg-plus"
+                    v-if="auto.news.length < 8"
+                    @click="showSearch(auto.news)"
+                ></li>
+            </ul>
+        </div>
+
+        <div class="mt-2">
+            <button type="button" class="btn btn-success" @click="setReply(auto)">保存设置</button>
+            <button type="button" class="btn" :class="{ 'btn-danger': auto.is_set }" :disabled="!auto.is_set" @click="delReply(auto)">删除回复</button>
+        </div>
+    </div>
+
+    <div class="tab-pane" v-show="tab == 'keyword'">
+        <div v-show="!keywords.showForm">
+            <button class="btn btn-primary" @click="addKeyword">添加规则</button>
+
+            <table class="table table-hover mt-3">
+                <thead>
+                <tr class="row">
+                    <th class="col-sm-2">#</th>
+                    <th class="col-sm-4">关键词</th>
+                    <th class="col-sm-3">消息类型</th>
+                    <th class="col-sm-3">操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-if="!keywords.total">
+                    <td colspan="4" class="warning text-center">暂无规则。请点击上方的“添加规则”按钮进行添加。</td>
+                </tr>
+                <tr class="row" v-for="(kw, index) in keywords.lists">
+                    <td class="col-sm-2">{{ index + 1 }}</td>
+                    <td class="col-sm-4">{{ kw.keyword }}</td>
+                    <td class="col-sm-3">{{ msgType(kw.msg_type) }}</td>
+                    <td class="col-sm-3">
+                        <button class="btn btn-sm btn-info" @click="editKeyword(kw)">编辑</button>
+                        <button class="btn btn-sm btn-danger" @click="delReply(kw, true, index)">删除</button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <div class="paging" v-if="keywords.pages">
+                <button type="button" class="btn btn-secondary btn-sm" @click="prevPage">
+                    <i class="fa fa-angle-double-left"></i>
+                    上一页
+                </button>
+                <input type="number" class="form-control form-control-sm page" min="1" :max="keywords.pages" v-model.number="keywords.page" @keyup.enter="page">
+                /
+                <span>{{ keywords.pages }}</span>
+                <button type="button" class="btn btn-secondary btn-sm" @click="nextPage">
+                    <i class="fa fa-angle-double-right"></i>
+                    下一页
+                </button>
+            </div>
+        </div>
+
+        <form method="post" class="form-horizontal" v-show="keywords.showForm" @submit.prevent="setReply(keywords.form, true)">
+            <h5 class="form-title" v-text="keywords.form.id > 0 ? '编辑规则' : '添加规则'"></h5>
+
+            <div class="form-group row">
+                <label for="key" class="col-sm-2 col-form-label required">关键词</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" id="key" placeholder="填写触发该规则的关键词" v-model="keywords.form.keyword">
+                    <small class="form-text text-muted">当用户回复这个内容时公众账号会自动给用户发送消息。</small>
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label required">消息类别</label>
+                <div class="col-sm-10">
+                    <div class="col-form-label form-check-inline">
+                        <label class="radio-inline">
+                            <input type="radio" name="msg_type" value="0" v-model.number="keywords.form.msg_type">
+                            文本
+                        </label>
+                    </div>
+                    <div class="col-form-label form-check-inline">
+                        <label class="radio-inline">
+                            <input type="radio" name="msg_type" value="1" v-model.number="keywords.form.msg_type">
+                            图片
+                        </label>
+                    </div>
+                    <div class="col-form-label form-check-inline">
+                        <label class="radio-inline">
+                            <input type="radio" name="msg_type" value="2" v-model.number="keywords.form.msg_type">
+                            图文
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group row" v-show="isText(keywords.form.msg_type)">
+                <label for="keywordContent" class="col-sm-2 col-form-label required">回复内容</label>
+                <div class="col-sm-10">
+                    <textarea class="form-control" id="keywordContent" rows="10" placeholder="填写回复内容" v-model="keywords.form.content"></textarea>
+                </div>
+            </div>
+
+            <div class="form-group row" v-show="isPic(keywords.form.msg_type)">
+                <label class="col-sm-2 col-form-label required">回复图片</label>
+                <div class="col-sm-10"><p class="bg-warning">暂不支持图片回复</p></div>
+            </div>
+
+            <div class="form-group row" v-show="isNews(keywords.form.msg_type)">
+                <label class="col-sm-2 col-form-label required">回复图文</label>
+                <div class="col-sm-10">
+                    <ul class="card wx-news">
+                        <li class="article"
+                            :class="{ only: keywords.form.news.length == 1 }"
+                            v-for="(article, index) in keywords.form.news"
+                        >
+                            <template v-if="keywords.form.news.length == 1">
+                                <h4 class="title">{{ article.title }}</h4>
+                                <div class="cover" :style="{ backgroundImage: 'url(' + article.cover + ')' }"></div>
+                                <p class="desc">{{ article.desc }}</p>
+                            </template>
+
+                            <template v-else>
+                                <div class="cover"
+                                     v-if="index < 1"
+                                     :style="{ backgroundImage: 'url(' + article.cover + ')' }"
+                                >
+                                    <p class="title">{{ article.title }}</p>
+                                </div>
+                                <div v-else class="other">
+                                    <p class="title">{{ article.title }}</p>
+                                    <img class="thumb" :src="article.thumb">
+                                </div>
+                            </template>
+
+                            <i class="fa fa-close" @click="keywords.form.news.splice(index, 1)"></i>
+                        </li>
+                        <li class="article bg-plus"
+                            v-if="auto.news.length < 8"
+                            @click="showSearch(keywords.form.news)"
+                        ></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="form-group text-center">
+                <button type="submit" class="btn btn-success">立即保存</button>
+                <button type="reset" class="btn btn-secondary" @click="keywords.showForm = false">取消操作</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="modal search-article" v-show="search.show">
+        <div class="mask" @click="search.show = false"></div>
+        <div class="modal-dialog">
+            <div class="modal-content" :class="{ 'loading-after': search.searching }">
+                <div class="modal-header">
+                    <h5 class="modal-title">选择文章</h5>
+                    <button type="button" class="close" @click="search.show = false">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="form-group">
+                        <form method="get" class="input-group" @submit.prevent="doSearch">
+                            <input class="form-control" type="text" v-model="search.text" placeholder="文章标题">
+                            <button type="submit" class="input-group-addon">
+                                <i class="fa fa-search"></i>
+                            </button>
+                        </form>
+
+                        <table class="table table-hover mt-2">
+                            <tbody>
+                            <tr v-for="(a, index) in search.results">
+                                <td v-text="a.title"></td>
+                                <td width="30">
+                                    <button type="button" class="btn btn-sm btn-secondary" @click="select(a, index)">选择</button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading bg-mask" v-show="loading">
+        <div class="wrap">
+            <img src="/Assets/images/loading.svg">
+            <small class="load-msg">{{ loadMsg }}</small>
+        </div>
+    </div>
+</div>
+
+
+<assign name="load_script[]" value="/Assets/js/admin/wechat/reply.js" />
+<script>
+    var urls = {
+        setReply: "{:U('Reply/setReply')}",
+        delReply: "{:U('Reply/delReply')}",
+        keywords: "{:U('Reply/keywords')}",
+        keywordDetail: "{:U('Reply/keywordDetail')}",
+        all: "{:U('Reply/all')}",
+        search: "{:U('Article/search')}",
+        getNews: "{:U('Article/news')}"
+    }
+</script>

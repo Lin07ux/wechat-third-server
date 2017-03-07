@@ -20,7 +20,7 @@ class ArticleController extends CommonController
     public function lists()
     {
         $page = I('get.page', 1);
-        $rows = 7;
+        $rows = 15;
 
         $articles = D('Articles')->lists($page, $rows);
 
@@ -157,13 +157,20 @@ class ArticleController extends CommonController
      */
     public function search()
     {
-        $articles = D('Articles')->search(I('post.query'));
+        $keyword = I('get.keyword');
 
-        if ($articles) {
-            $res = ['code' => 0, 'msg' => '查询成功', 'data' => $articles];
+        if ($keyword) {
+            $articles = D('Articles')->search($keyword);
+
+            if ($articles) {
+                $res = ['code' => 0, 'msg' => '查询成功', 'data' => $articles];
+            } else {
+                $res = ['code' => 101, 'msg' => '查询失败，请稍后重试！'];
+            }
         } else {
-            $res = ['code' => 1502, 'msg' => '查询失败。请稍后重试。'];
+            $res = ['code' => 10, 'msg' => '请提供搜索的关键词'];
         }
+
 
         $this->ajaxReturn($res);
     }

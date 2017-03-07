@@ -2,14 +2,14 @@
 
 <link rel="stylesheet" href="/Assets/wangEditor/wangEditor.min.css">
 
-<div class="articles" id="articles" v-cloak>
+<div class="wx-articles" id="articles" v-cloak>
     <div class="lists" v-show="!showForm">
         <div class="row align-items-center dividing">
             <span class="col">所有文章 <small>(总数 {{ articles.total }})</small></span>
             <button class="btn btn-primary" @click="add">新建文章</button>
         </div>
 
-        <table class="table table-hover">
+        <table class="table table-hover mt-4">
             <thead>
             <tr class="row">
                 <th class="col-sm-1">#</th>
@@ -52,7 +52,7 @@
     </div>
 
     <form class="main" method="post" v-show="showForm" @submit.prevent="submit">
-        <h3 class="title" v-text="form.id ? '编辑文章' : '新建文章'"></h3>
+        <h3 class="form-title" v-text="form.id ? '编辑文章' : '新建文章'"></h3>
 
         <div class="form-group row">
             <label for="title" class="col-sm-2 col-form-label required">文章标题</label>
@@ -108,13 +108,13 @@
         <div class="form-group row">
             <label class="col-sm-2 col-form-label required">文章类型</label>
             <div class="col-sm-10">
-                <div class="form-check form-check-inline">
+                <div class="col-form-label form-check-inline">
                     <label class="radio-inline">
                         <input type="radio" name="type" value="0" v-model.number="form.type">
                         外链文章
                     </label>
                 </div>
-                <div class="form-check form-check-inline">
+                <div class="col-form-label form-check-inline">
                     <label class="radio-inline">
                         <input type="radio" name="type" value="1" v-model.number="form.type">
                         原创文章
@@ -138,8 +138,8 @@
         </div>
 
         <div class="form-group text-center">
-            <button type="submit" class="btn btn-success">保存</button>
-            <button type="reset" class="btn btn-default" @click="showForm = false">取消</button>
+            <button type="submit" class="btn btn-success">立即保存</button>
+            <button type="reset" class="btn btn-secondary" @click="showForm = false">取消操作</button>
         </div>
     </form>
 

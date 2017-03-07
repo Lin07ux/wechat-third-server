@@ -4,7 +4,6 @@
  *********************/
 *{outline:none}
 html,body{height:100%;width:100%}
-table{margin-top:25px}
 table td .btn + .btn{margin-left:.5em}
 a,a:hover,a:active,a:focus,a:visited{text-decoration:none;color:inherit}
 ul,ol{margin:0;padding:0}
@@ -16,6 +15,19 @@ button{cursor:pointer}
 .loading .wrap{position:absolute;top:35%;left:45%;text-align:center}
 .loading img{display:block;width:60px;height:60px;margin:0 auto}
 .loading .load-msg{display:block;color:#636c72}
+.loading-after::after{
+    content: '';
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: inherit;
+    background: rgba(255,255,255,.7) url("/Assets/images/loading.svg") no-repeat center;
+    background-size: 60px 60px;
+    z-index: 2;
+}
 .absolute{position:absolute;top:0;left:0;bottom:0;right:0;}
 .checkbox label + label{margin-left:2.5em;}
 
@@ -23,13 +35,9 @@ button{cursor:pointer}
 /* bootstrap 修改 */
 .form-group .help-block{margin-bottom:0;}
 .bg-warning,.bg-success,.bg-info{padding:15px;}
-.btn.active.focus, .btn.active:focus,
-.btn.focus, .btn:active.focus,
-.btn:active:focus, .btn:focus {
-    outline: thin dotted;
-    outline: 1px auto -webkit-focus-ring-color;
-    outline-offset: -3px;
-}
+.btn.active.focus,.btn.active:focus,.btn.focus,.btn:active.focus,
+.btn:active:focus,.btn:focus,button:focus{outline:none}
+.btn-group .btn{-webkit-box-shadow:none;-moz-box-shadow:none;box-shadow:none}
 .input-group .form-control{z-index:initial;}
 body > .modal-backdrop{z-index: 1039;}
 form .control-label.required:after{content:'*';position:absolute;color:#f00;margin-left:3px;font-size:1.3em;}
@@ -39,6 +47,36 @@ form .control-label.required:after{content:'*';position:absolute;color:#f00;marg
     border-right: 0;
 }
 .form-text p{margin-bottom:0}
+.bg-plus{position:relative;cursor:pointer;}
+.bg-plus:before,.bg-plus:after{
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    background-color: #e4e4e4;
+    -webkit-transform: translate(-50%, -50%);
+    -moz-transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    -o-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+.bg-plus:before{width:30px;height:2px;}
+.bg-plus:after{width:2px;height:30px;}
+.bg-plus:hover:before,.bg-plus:hover:after{background-color:#808080;}
+.modal .mask{
+    position: absolute;
+    display: block;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    overflow: hidden;
+    outline: 0;
+    opacity: .5;
+    background: #000;
+    z-index: -1;
+}
+.form-check-inline .radio-inline{margin-bottom:0}
 
 
 /* wangEditor 编辑器修改 */
@@ -56,7 +94,6 @@ form .control-label.required:after{content:'*';position:absolute;color:#f00;marg
     border-radius: 4px;
     -webkit-transition: box-shadow .3s;
     -moz-transition: box-shadow .3s;
-    -ms-transition: box-shadow .3s;
     -o-transition: box-shadow .3s;
     transition: box-shadow .3s;
 }
@@ -273,7 +310,8 @@ body.row, tr.row{margin:0;padding:0;}
     background-color: #fff;
     border-radius: 5px;
 }
-.content form .title{font-size:20px;margin-bottom:20px;text-align:center}
+.content .main .nav-tabs{padding-left:20px;margin-bottom:20px}
+.content .form-title{font-size:20px;margin-bottom:20px;text-align:center}
 .content form label.required:after{content:'*';margin-left:3px;color:red;}
 
 /* 弹出式表单 */
@@ -316,9 +354,8 @@ body.row, tr.row{margin:0;padding:0;}
     border: 1px dashed rgb(204, 204, 204);
     border-radius: 6px;
     text-align: center;
-    background-size: 100% auto;
-    background-position: center;
-    background-repeat: no-repeat;
+    background: transparent no-repeat center center;
+    background-size: 100% auto ;
 }
 .upload.done{border-color:#36fb04}
 .upload .fa {
@@ -332,10 +369,8 @@ body.row, tr.row{margin:0;padding:0;}
 .upload [type="file"]{width:100%;cursor:pointer;opacity:0;z-index:1}
 .upload.uploading:after{
     content: '';
-    background: url("/Assets/images/loading.svg") no-repeat;
+    background: rgba(0,0,0,.1) url("/Assets/images/loading.svg") no-repeat center;
     background-size: 60px 60px;
-    background-position: center;
-    background-color: rgba(0,0,0,.1);
     z-index: 2;
 }
 
@@ -343,7 +378,36 @@ body.row, tr.row{margin:0;padding:0;}
 .paging{margin-top:20px;text-align:right}
 .paging .page{display:inline-block;width:2.5em;padding-right:0;text-align:center}
 
+
+/********************
+ *  微信相关
+ *******************/
+/* 微信自动回复 */
+.wx-reply .wx-news{width:382px;padding:15px;margin:0;list-style:none}
+.wx-reply .article{position:relative;height:80px;padding:5px 0}
+.wx-reply .article:first-child{height:185px;padding:0 0 5px}
+.wx-reply .article.only{height:auto}
+.wx-reply .article + .article{border-top:1px solid #e0e0e0}
+.wx-reply .article .fa{position:absolute;right:3px;top:3px;color:red;cursor:pointer}
+.wx-reply .article .cover{position:relative;height:100%;overflow:hidden;background:no-repeat center;background-size:100% auto}
+.wx-reply .article .cover .title{position:absolute;bottom:0;padding:5px;margin:0;font-size:16px}
+.wx-reply .article.only .cover{height:150px;margin-bottom:10px}
+.wx-reply .article .other{display:table;vertical-align:middle}
+.wx-reply .article .other .title{display:table-cell;width:300px}
+.wx-reply .article .other .thumb{width:68px;height:68px}
+.wx-reply .search-article{display:block;}
+/* 自定义菜单 */
+.wx-menu .menu-publish{position:absolute;right:2em;top:2em;}
+.wx-menu .menu-form{margin-top:25px;}
+.wx-menu .wx-sub-menus{width:10em;text-align:center;padding:5px 12px;}
+.wx-menu .wx-sub-menus .sub-menu{margin:0 auto;padding:10px 0;width:8em;color:#8c8c8c;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;cursor:pointer;}
+.wx-menu .wx-sub-menus .sub-menu:hover{color:#222;}
+.wx-menu .wx-sub-menus .sub-menu + .sub-menu{border-top:1px solid #e8e7e7;}
+.wx-menu .wx-sub-menus .bg-plus{text-indent:-999px;}
+.wx-menu .wx-sub-menus .bg-plus:after{height:20px;}
+.wx-menu .sub-form{overflow-x:hidden;overflow-y:auto;}
+
 /* 微信文章 */
-.articles form .upload{margin:0 auto}
-.articles .upload.cover{width:245px;height:137px}
-.articles .upload.thumb{width:137px;height:137px;}
+.wx-articles form .upload{margin:0 auto}
+.wx-articles .upload.cover{width:245px;height:137px}
+.wx-articles .upload.thumb{width:137px;height:137px;}

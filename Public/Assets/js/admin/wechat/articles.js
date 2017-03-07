@@ -2,34 +2,6 @@
  * Created by Lin07ux on 2017/1/20.
  */
 
-// Object.assign Polyfill
-if (typeof Object.assign != 'function') {
-    Object.assign = function(target, varArgs) {
-        'use strict';
-        if (target == null) { // TypeError if undefined or null
-            throw new TypeError('Cannot convert undefined or null to object');
-        }
-
-        var to = Object(target);
-        var length = arguments.length;
-
-        for (var index = 1; index < length; index++) {
-            var nextSource = arguments[index];
-
-            if (nextSource != null) { // Skip over if undefined or null
-                for (var nextKey in nextSource) {
-                    // Avoid bugs when hasOwnProperty is shadowed
-                    if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
-                        to[nextKey] = nextSource[nextKey];
-                    }
-                }
-            }
-        }
-
-        return to;
-    };
-}
-
 Vue.config.devtools = true;
 Vue.http.options.emulateJSON = true;
 
@@ -43,7 +15,7 @@ new Vue({
             total: 0,
             pages: 0,
             page: 1,
-            rows: 20
+            rows: 15
         },
         showForm: false,
         form: {},
@@ -269,7 +241,7 @@ new Vue({
 
                 typeof success == 'function' && success(res.data);
 
-            }).catch(function (response) {
+            }).catch(function () {
                 alert('网络故障，请稍后重试！');
             }).then(function () {
                 setTimeout(function () { self.loading = false; }, 200);

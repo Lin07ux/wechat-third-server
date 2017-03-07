@@ -36,14 +36,7 @@ class WechatController extends CommonController
      */
     public function reply()
     {
-        $Reply = D('WxReply');
-        $wx_appid = session('user.wx_appid');
-
-        $this->assign('title', '自动回复')
-            ->assign('subscribe', $Reply->info($wx_appid, 'subscribe', true))
-            ->assign('auto', $Reply->info($wx_appid, 'auto', true))
-            ->assign('keywords', $Reply->info($wx_appid, 'keyword', true))
-            ->display();
+        $this->assign('title', '自动回复')->display();
     }
 
     /**

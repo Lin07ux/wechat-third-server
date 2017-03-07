@@ -53,10 +53,14 @@ class ArticlesModel extends Model
         if (!$paging) return $lists;
 
         $count = $lists ? count($lists) : 0;
-        $total = $rows > $count ? (($page - 1) * $rows + $count) : (int)$this->count();
+        if ($count < $rows && $count > 0) {
+            $total = ($page - 1) * $rows + $count;
+        } else {
+            $total = $this->count();
+        }
 
         return [
-            'total' => $total,
+            'total' => (int)$total,
             'lists' => (array)$lists,
             'page'  => (int)$page,
             'rows'  => (int)$rows,
@@ -171,19 +175,28 @@ class ArticlesModel extends Model
     /**
      * 获取图文消息中指定的文章信息
      *
-     * @param string $ids  文章的id
-     * @param bool   $link 是否需要获取link
+     * @param string|array $ids  文章的id
+     * @param bool         $link 是否需要获取link
      *
      * @return bool|mixed
      */
     public function news($ids, $link = false)
     {
-        if (!is_string($ids) || !is_array($ids)) return false;
+        if (!is_string($ids) && !is_array($ids)) return false;
+
+        if (is_array($ids)) $ids = implode(',', $ids);
 
         $fields = 'id,title,desc,cover,thumb';
-        if ($link) $fields .= ',link';
 
-        return $this->field($fields)->where(['id' => ['in', $ids]])->limit(8)->select();
+        if ($link) {
+            $fields .= sprintf(
+                ', (CASE WHEN type = %d THEN `link` ELSE `url`) AS link',
+                $this->type['link']
+            );
+        }
+
+        return $this->field($fields)->where(['id' => ['in', $ids]])
+            ->order("FIND_IN_SET(id, '{$ids}')")->limit(8)->select();
     }
 
     /**
@@ -195,9 +208,10 @@ class ArticlesModel extends Model
      */
     public function search($title)
     {
+        $title = trim($title);
         $results =  $this->field('id,title,desc,cover,thumb')
             ->where(['title' => ['like', "%{$title}%"]])
-            ->limit(20)->select();
+            ->limit(10)->order('id desc')->select();
 
         if (is_null($results)) $results = [];
 
