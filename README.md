@@ -2,6 +2,12 @@
 
 该项目用于实现一个最基本的微信公众号第三方服务器开发的模板。
 
+基于：
+
+- ThinkPHP v3.2.3
+- Vue v2.2.0
+- Vue-resource v1.0.3
+
 ### 功能
 
 - 微信用户访问的前端模块
@@ -86,3 +92,14 @@ server {
 - 150  上传文件失败
 
 - 404  Not Found
+
+### 使用
+使用前，需要先配置公共文件`Application/Common/Config/config.php`，根据其中的注释信息，根据你的实际情况，填写完整数据库、上传文件目录、微信公众号的相关信息。
+
+默认情况下，配置好即可使用了。
+
+> 在[微信公众号后台](https://mp.weixin.qq.com)中，`开发 - 基本配置 - 服务器配置 - URL(服务器地址)`处填写的 URL 为`http[s]://your-domain.com/wechat.php`。
+
+如果需要开启调试模式，请设置对应的入口文件的`APP_DEBUG`为 true。
+
+如果要调试 Vue，一般就直接将对应的模板中的`vue.min.js`换成`vue.js`即可。
