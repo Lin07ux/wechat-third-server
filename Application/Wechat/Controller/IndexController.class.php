@@ -5,7 +5,9 @@ use Think\Controller;
 use Think\Log;
 use ZeroWeChat\Reply;
 use ZeroWeChat\User;
+use ZeroWeChat\Util;
 use ZeroWeChat\Wechat;
+use ZeroWeChat\WXBizMsgCrypt;
 use ZeroWeChat\XML;
 
 class IndexController extends Controller
@@ -14,6 +16,11 @@ class IndexController extends Controller
      * @var \Admin\Model\ReplyModel 微信回复模型实例
      */
     private $reply = null;
+
+    /**
+     * @var WXBizMsgCrypt 消息加解密类实例
+     */
+    protected $msgCrypt;
 
     /**
      * 微信服务器通讯接口
@@ -61,11 +68,15 @@ class IndexController extends Controller
 
         if (!$reply) $this->sendEmpty();
 
-        Log::record('[生成的消息]'.$reply, 'DEBUG');
-
         // 如果需要加密则加密生成的 XML 内容
         if (C('WECHAT.ENCRYPT')) {
-            // TODO
+            // 加密回复的 XML 字符串
+            $nonce = Util::createNonceStr();
+            $reply = $this->msgCrypt->encryptMsg($reply, time(), $nonce);
+
+            if (!$reply) {
+                Log::record('[加密消息失败] '.$this->msgCrypt->getErrCode(), 'DEBUG');
+            }
         }
 
         echo $reply;
@@ -91,16 +102,33 @@ class IndexController extends Controller
      */
     protected function processMsg()
     {
-        $postStr = file_get_contents("php://input");
+        $msg = file_get_contents("php://input");
+        if (empty($msg)) return false;
 
         // 如果设置了消息加密则需要进行解密
         if (C('WECHAT.ENCRYPT')) {
-            // TODO
+            $this->msgCrypt = new WXBizMsgCrypt(
+                C('WECHAT.APPID'),
+                C('WECHAT.TOKEN'),
+                C('WECHAT.AESKey')
+            );
+
+            $msg = $this->msgCrypt->decryptMsg(
+                $msg,
+                I('get.msg_signature'),
+                I('get.nonce'),
+                I('get.timestamp')
+            );
+
+            if (!$msg) {
+                $err = '[推送信息解析失败] 错误代码：' . $this->msgCrypt->getErrCode();
+                Log::record($err, 'ERR');
+
+                return false;
+            }
         }
 
-        if (empty($postStr)) return false;
-
-        return XML::parse($postStr);
+        return XML::parse($msg);
     }
 
     /**
@@ -275,7 +303,7 @@ class IndexController extends Controller
      *
      * @param array $msg 推送来的消息数组
      */
-    private function msg_event_scan()
+    protected function msg_event_scan()
     {
         // 用户已关注时的事件推送
         // EventKey  事件KEY值，是一个32位无符号整数，即创建二维码时的二维码scene_id
@@ -287,7 +315,7 @@ class IndexController extends Controller
      *
      * @param array $msg 推送来的消息数组
      */
-    private function msg_event_location()
+    protected function msg_event_location()
     {
         // Latitude  地理位置纬度
         // Longitude 地理位置经度
