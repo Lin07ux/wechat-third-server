@@ -2,204 +2,255 @@
 namespace Wechat\Controller;
 
 use Think\Controller;
+use Think\Log;
+use ZeroWeChat\Reply;
+use ZeroWeChat\User;
+use ZeroWeChat\Wechat;
+use ZeroWeChat\XML;
 
 class IndexController extends Controller
 {
-    const TOKEN      = "huataiyimei";
-    const TYPE_FOCUS = 0;
-    const TYPE_AUTO  = 1;
-    const TYPE_KEY   = 2;
-
     /**
-     * 存放将微信服务器推送过来的信息处理后生成的对象
-     * ToUserName   -> 开发者微信号
-     * FromUserName -> 发送方帐号（一个OpenID）
-     * CreateTime   -> 消息创建时间 （整型）
-     * MsgType      -> 消息类型:text/image/voice/video/shortvideo/location/link/event
-     * MsgId	    -> 消息id，64位整型
+     * @var \Admin\Model\ReplyModel 微信回复模型实例
      */
-    private $msg = null;
-
-    // 存放数据库中设置的回复信息
     private $reply = null;
 
-    // 存放返回信息
-    private $response = null;
-
-
-
-    public function index(){
-        // 仅在启用微信第三方服务器的时候使用一次,之后就要注释掉
-        // $this->valid();
-        // exit();
-
-        // 验证是否是微信发过来的请求,不是则直接回复空
-        if(! $this->checkSignature())
-            $this->reply_empty();
-
-
-        // 处理微信服务器的推送信息,写入到$this->msg
-        $this->processMsg();
-
-        // 根据推送消息的事件类型调用方法,获取数据,写入到$this->reply
-        $msg_fun = 'msg_' . strtolower( trim($this->msg->MsgType) );
-        $this->$msg_fun();
-
-        // 如果没有设置对应的关键词回复,则获取自动回复
-        if (! $this->reply)
-            $this->auto_reply();
-
-        // 如果没有对应的回复,也没有设置自动回复,则直接回复空信息
-        if (! $this->reply) {
-            $this->reply_empty();
-        } else {
-            // 根据回复类型调用相应的函数,生成返回数据,写入到$this->response
-            $reply_fun   = 'reply_' . strtolower( trim($this->reply['MsgType']) );
-            $this->$reply_fun();
-        }
-
-        // $this->show($this->response, 'utf-8', 'text/xml');
-        echo $this->response;
-        exit();
-    }
-
-    // 与微信服务器进行互相验证
-    protected function valid()
+    /**
+     * 微信服务器通讯接口
+     */
+    public function index()
     {
-        $echoStr = $_GET["echostr"];
+        // 验证是否是微信发过来的请求,不是则直接回复空
+        if(! $this->checkSignature()) $this->sendEmpty();
 
-        //valid signature , option
-        if($this->checkSignature()){
-            echo $echoStr;
-            exit;
+        // 首次接入服务器的时候进行验证
+        if (IS_GET) {
+            echo $_GET["echostr"];
+            exit();
         }
 
-        exit();
+        /**
+         * 将微信服务器推送过来的信息处理后生成数组
+         * ToUserName   -> 开发者微信号
+         * FromUserName -> 发送方帐号（一个OpenID）
+         * CreateTime   -> 消息创建时间 （整型）
+         * MsgType      -> 消息类型:text/image/voice/video/shortvideo/location/link/event
+         * MsgId	    -> 消息id，64位整型
+         */
+        $msg = $this->processMsg();
+        if (!$msg) $this->sendEmpty();
+
+        // 根据推送消息的事件类型得到对应的回调方法名
+        $msgType = ucfirst($msg['MsgType']);
+        $callback = 'handle' . $msgType;
+
+        // 如果是事件,则对应的处理方法为 handleEvent<EventType> 格式
+        if ('Event' == $msgType) $callback .= ucfirst($msg['Event']);
+
+        // 如果不存在回调方法则回复空
+        if (!method_exists($this, $callback)) $this->sendEmpty();
+
+        $this->reply = D('Admin/Reply');
+        $response = $this->$callback($msg);
+
+        if (!$response) $this->sendEmpty();
+
+        // 生成回复消息的 XML 字符串
+        $Reply = new Reply($msg['FromUserName'], $msg['ToUserName']);
+        $reply = $Reply->genReplyXML($response);
+
+        if (!$reply) $this->sendEmpty();
+
+        Log::record('[生成的消息]'.$reply, 'DEBUG');
+
+        // 如果需要加密则加密生成的 XML 内容
+        if (C('WECHAT.ENCRYPT')) {
+            // TODO
+        }
+
+        echo $reply;
     }
-    // 验证服务器是否是微信的
+
+    /**
+     * 验证服务器是否是微信的
+     *
+     * @return bool
+     */
     private function checkSignature()
     {
-        $signature = $_GET["signature"];
-        $timestamp = $_GET["timestamp"];
-        $nonce     = $_GET["nonce"];
-
-        $tmpArr = array(self::TOKEN, $timestamp, $nonce);
-        // use SORT_STRING rule
+        $tmpArr = [C('WECHAT.TOKEN'), $_GET["timestamp"], $_GET["nonce"]];
         sort($tmpArr, SORT_STRING);
-        $tmpStr = implode( $tmpArr );
-        $tmpStr = sha1( $tmpStr );
 
-        if( $tmpStr == $signature ){
-            return true;
-        }else{
-            return false;
-        }
+        return sha1(implode($tmpArr)) == $_GET["signature"];
     }
 
-    // 处理微信推送过来的信息
+    /**
+     * 处理微信推送过来的信息
+     *
+     * @return array|bool
+     */
     protected function processMsg()
     {
-        //$postStr = $GLOBALS["HTTP_RAW_POST_DATA"];
         $postStr = file_get_contents("php://input");
 
-        //extract post data
-        if (!empty( $postStr )) {
-            /* libxml_disable_entity_loader is to prevent XML eXternal Entity Injection,
-                   the best way is to check the validity of xml by yourself */
-            libxml_disable_entity_loader(true);
-            $this->msg = simplexml_load_string($postStr, 'SimpleXMLElement', LIBXML_NOCDATA);
-            //$this->msg['fromUsername'] = $postObj->FromUserName;
-        } else {
-            echo "";
-            exit;
-        }
-    }
-
-
-    /**********************************************/
-    /* 根据消息内容,获取数据库中设置的回复信息 */
-    /**********************************************/
-
-    // 获取自动回复,当用户的输入没有对应的回复时使用
-    protected function auto_reply()
-    {
-        $where   = array(
-            'type'    => self::TYPE_AUTO,
-            'status'  => 1,  // 启用状态
-        );
-
-        $this->reply = M('reply')->where($where)->find();
-    }
-
-    // 文本消息
-    protected function msg_text()
-    {
-        // Content -> 文本消息内容
-        $content = filter_var($this->msg->Content, FILTER_SANITIZE_MAGIC_QUOTES);
-
-        if ('1897' === $content) {
-            $winners = M()->table('__LOTTERY_RESULT__ a, __OPENID__ b')->field('a.prize, b.nickname')
-                ->where('b.openid=a.openid AND a.prize IS NOT NULL')->select();
-            $third  = "三等奖: ";
-            $second = "\n二等奖: ";
-            $first  = "\n一等奖: ";
-            foreach ($winners as $val) {
-                if (1 == $val['prize']) {
-                    $first  .= "\n" . $val['nickname'];
-                } elseif (2 == $val['prize']) {
-                    $second .= "\n" . $val['nickname'];
-                } elseif (3 == $val['prize']) {
-                    $third  .= "\n" . $val['nickname'];
-                }
-            }
-
-            $res = array(
-                'MsgType'=>'text',
-                'content'=>$third . "\n" . $second . "\n" . $first,
-            );
-        } else {
-            $where   = array(
-                'keyword' => $content,
-                'type'    => self::TYPE_KEY,
-                'status'  => 1,  // 启用状态
-            );
-            $res = M('reply')->where($where)->find();
+        // 如果设置了消息加密则需要进行解密
+        if (C('WECHAT.ENCRYPT')) {
+            // TODO
         }
 
-        // 找到对应的回复记录,写入到$this->reply
-        $this->reply = $res;
+        if (empty($postStr)) return false;
+
+        return XML::parse($postStr);
     }
 
-    // 图片消息 TODO
-    protected function msg_image()
+    /**
+     * 获取公众号的 access_token
+     *
+     * @return bool|string
+     */
+    protected function getAccessToken()
+    {
+        $wechat = Wechat::getInstance(C('WECHAT.APPID'), C('WECHAT.SECRET'));
+
+        return $wechat->getAccessToken();
+    }
+
+    /**
+     * 回复空信息
+     */
+    protected function sendEmpty()
+    {
+        echo "";
+        exit();
+    }
+
+    /**
+     * 处理用户关注事件
+     *
+     * @param array $msg 推送过来的解密过的信息数组
+     *
+     * @return bool|array
+     */
+    protected function handleEventSubscribe(array $msg)
+    {
+        $openid = $msg['FromUserName'];
+
+        // 获取该公众号的access_token以便获取用户信息
+        if ($access_token = $this->getAccessToken()) {
+            $User = new User($access_token);
+            $info = $User->get($openid);
+
+            // 获取用户信息成功则写入数据库中
+            if ($info) D('Users')->syncUserInfo($info, false);
+        }
+
+        return $this->reply->getReply('subscribe');
+    }
+
+    /**
+     * 处理用户取消关注事件
+     *
+     * @param array $msg 推送过来的解密过的信息数组
+     *
+     * @return null
+     */
+    protected function handleEventUnsubscribe(array $msg)
+    {
+        $openid = $msg['FromUserName'];
+        D('Users')->unsubscribe($openid);
+
+        return null;
+    }
+
+    /**
+     * 处理用户点击菜单的事件
+     *
+     * @param array $msg 推送过来的解密过的信息数组
+     *
+     * @return bool|mixed
+     */
+    protected function handleEventClick(array $msg)
+    {
+        return $this->reply->getClickInfo($msg['EventKey'], true);
+    }
+
+    /**
+     * 处理用户发送的文本信息
+     *
+     * @param array $msg 推送过来的解密过的信息数组
+     *
+     * @return bool|array
+     */
+    protected function handleText(array $msg)
+    {
+        $reply = $this->reply->getReply('keyword', $msg['Content']);
+
+        if (!$reply) $reply = $this->autoReply();
+
+        return $reply;
+    }
+
+    /**
+     * 获取自动回复 当用户的输入没有对应的回复时使用
+     *
+     * @return array|bool
+     */
+    protected function autoReply()
+    {
+        return $this->reply->getReply('auto');
+    }
+
+
+    /**
+     * 图片消息 TODO
+     *
+     * @param array $msg 推送来的消息数组
+     */
+    protected function msg_image($msg)
     {
         // PicUrl 图片链接
         // MediaId 图片消息媒体id，可以调用多媒体文件下载接口拉取数据。
     }
 
-    // 音频消息 TODO
-    protected function msg_voice()
+    /**
+     * 音频消息 TODO
+     *
+     * @param array $msg 推送来的消息数组
+     */
+    protected function msg_voice($msg)
     {
         // MediaId 语音消息媒体id，可以调用多媒体文件下载接口拉取数据。
         // Format  语音格式，如amr，speex等
     }
 
-    // 视频消息 TODO
-    protected function msg_video()
+    /**
+     * 视频消息 TODO
+     *
+     * @param array $msg 推送来的消息数组
+     */
+    protected function msg_video($msg)
     {
         // MediaId 视频消息媒体id，可以调用多媒体文件下载接口拉取数据。
         // ThumbMediaId 视频消息缩略图的媒体id，可以调用多媒体文件下载接口拉取数据。
     }
 
-    // 短视频消息 TODO
-    protected function msg_shortvideo()
+    /**
+     * 短视频消息 TODO
+     *
+     * @param array $msg 推送来的消息数组
+     */
+    protected function msg_shortvideo($msg)
     {
         // MediaId 视频消息媒体id，可以调用多媒体文件下载接口拉取数据。
         // ThumbMediaId 视频消息缩略图的媒体id，可以调用多媒体文件下载接口拉取数据。
     }
 
-    // 位置信息 TODO
-    protected function msg_location()
+    /**
+     * 位置信息 TODO
+     *
+     * @param array $msg 推送来的消息数组
+     */
+    protected function msg_location($msg)
     {
         // Location_X 地理位置维度
         // Location_Y 地理位置经度
@@ -207,55 +258,23 @@ class IndexController extends Controller
         // Label      地理位置信息
     }
 
-    // 链接信息 TODO
-    protected function msg_link()
+    /**
+     * 链接信息 TODO
+     *
+     * @param array $msg 推送来的消息数组
+     */
+    protected function msg_link($msg)
     {
         // Title       消息标题
         // Description 消息描述
         // Url         消息链接
     }
 
-    // 事件消息
-    protected function msg_event()
-    {
-        // event  事件类型,需要统一转成小写
-        // subscribe(订阅)、unsubscribe(取消订阅)
-        // scan(扫描)、LOCATION(上报地理位置)
-        // click(点击菜单拉取消息时的事件推送)
-        // view(点击菜单跳转链接时的事件推送)
-
-        // 根据事件类型调用对应的方法,生成回复信息,存放在 $this->reply
-        $event_fun = 'msg_event_' . strtolower( trim($this->msg->Event) );
-        $this->$event_fun();
-    }
-
-    // 关注事件
-    private function msg_event_subscribe()
-    {
-        // 用户关注后将openid写入openid数据表中
-        $openid = "{$this->msg->FromUserName}";
-        D('Openid')->addUser($openid);
-
-        $where   = array(
-            'type'    => self::TYPE_FOCUS, // 关注回复
-            'status'  => 1,  // 启用状态
-        );
-        // 查找关注回复消息
-        $this->reply = M('reply')->where($where)->find();
-    }
-
-    // 取消关注事件
-    private function msg_event_unsubscribe()
-    {
-        // 将用户的openid重新处理下(设置state为0)
-        $openid = "{$this->msg->FromUserName}";
-        D('Openid')->removeUser($openid);
-
-        // 不回复消息
-        $this->reply_empty();
-    }
-
-    // 扫描事件 TODO
+    /**
+     * 扫描事件 TODO
+     *
+     * @param array $msg 推送来的消息数组
+     */
     private function msg_event_scan()
     {
         // 用户已关注时的事件推送
@@ -263,178 +282,15 @@ class IndexController extends Controller
         // Ticket    二维码的ticket，可用来换取二维码图片
     }
 
-    // 位置事件 TODO
+    /**
+     * 位置事件 TODO
+     *
+     * @param array $msg 推送来的消息数组
+     */
     private function msg_event_location()
     {
         // Latitude  地理位置纬度
         // Longitude 地理位置经度
         // Precision 地理位置精度
-    }
-
-    // 点击菜单拉取消息事件
-    private function msg_event_click()
-    {
-        // EventKey  与自定义菜单接口中KEY值对应,
-        // 目前设置为回复消息的ID,即从reply表中寻找
-
-        $rid = "{$this->msg->EventKey}";
-        $where   = array(
-            'id'     => $rid,
-            'type'   => self::TYPE_KEY, // 关注回复
-            'status' => 1,  // 启用状态
-        );
-        // 查找关注回复消息
-        $this->reply = M('reply')->where($where)->find();
-    }
-
-    // 点击菜单跳转链接事件
-    private function msg_event_view()
-    {
-        // EventKey  设置的跳转URL
-
-        // 不回复任何消息
-        $this->reply_empty();
-    }
-
-
-    /****************************************************/
-    /* 回复 */
-    /****************************************************/
-
-    // 回复空信息
-    protected function reply_empty()
-    {
-        echo "";
-        exit();
-    }
-
-    // 回复文本消息
-    protected function reply_text()
-    {
-        $tpl = "<xml>
-                  <ToUserName><![CDATA[%s]]></ToUserName>
-                  <FromUserName><![CDATA[%s]]></FromUserName>
-                  <CreateTime>%s</CreateTime>
-                  <MsgType><![CDATA[text]]></MsgType>
-                  <Content><![CDATA[%s]]></Content>
-                </xml>";
-
-        $this->response = sprintf($tpl,
-            $this->msg->FromUserName,
-            $this->msg->ToUserName,
-            time(),
-            $this->reply['content']
-        );
-    }
-
-    // 回复图片消息
-    protected function reply_image()
-    {
-        $tpl = "<xml>
-                  <ToUserName><![CDATA[%s]]></ToUserName>
-                  <FromUserName><![CDATA[%s]]></FromUserName>
-                  <CreateTime>%s</CreateTime>
-                  <MsgType><![CDATA[image]]></MsgType>
-                  <Image>
-                    <MediaId><![CDATA[%s]]></MediaId>
-                  </Image>
-                </xml>";
-
-        $this->response = sprintf($tpl,
-            $this->msg->FromUserName,
-            $this->msg->ToUserName,
-            time(),
-            $this->reply['MediaId']
-        );
-    }
-
-    // 回复音频消息 TODO
-    protected function reply_voice()
-    {
-        //
-    }
-
-    // 回复视频消息 TODO
-    protected function reply_video()
-    {
-        //
-    }
-
-    // 回复音乐消息 TODO
-    protected function reply_music()
-    {
-        //
-    }
-
-    // 回复图文消息 - 单条图文
-    protected function reply_news()
-    {
-        $tpl = "<xml>
-                  <ToUserName><![CDATA[%s]]></ToUserName>
-                  <FromUserName><![CDATA[%s]]></FromUserName>
-                  <CreateTime>%s</CreateTime>
-                  <MsgType><![CDATA[news]]></MsgType>
-                  <ArticleCount>1</ArticleCount>
-                  <Articles>
-                    <item>
-                      <Title><![CDATA[%s]]></Title>
-                      <Description><![CDATA[%s]]></Description>
-                      <PicUrl><![CDATA[%s]]></PicUrl>
-                      <Url><![CDATA[%s]]></Url>
-                    </item>
-                  </Articles>
-                </xml>";
-
-        $this->response = sprintf($tpl,
-            $this->msg->FromUserName,
-            $this->msg->ToUserName,
-            time(),
-            $this->reply['title'],
-            $this->reply['desc'],
-            C('HOST').$this->reply['pic'],
-            $this->reply['link'] . 'oid/' . $this->msg->FromUserName . '/k/' . $this->reply['id'] . '/p/' . $this->reply['MediaId']
-        );
-    }
-
-    // 回复图文-文章消息 - 单条图文
-    protected function reply_article()
-    {
-        $where   = array(
-            'id'=>$this->reply['content'],
-            'lock'=>0,
-        );
-        $article = M('article')->where($where)->find();
-        if (!$article) {
-            $this->reply['content'] = '该文章无法已被冻结,无法查阅';
-            $this->reply_text();
-        } else {
-            $tpl = "<xml>
-                  <ToUserName><![CDATA[%s]]></ToUserName>
-                  <FromUserName><![CDATA[%s]]></FromUserName>
-                  <CreateTime>%s</CreateTime>
-                  <MsgType><![CDATA[news]]></MsgType>
-                  <ArticleCount>1</ArticleCount>
-                  <Articles>
-                    <item>
-                      <Title><![CDATA[%s]]></Title>
-                      <Description><![CDATA[%s]]></Description>
-                      <PicUrl><![CDATA[%s]]></PicUrl>
-                      <Url><![CDATA[%s]]></Url>
-                    </item>
-                  </Articles>
-                </xml>";
-
-            $link = C('HOST').'/article/read/id/'.$article['id'].'/openid/'.$this->msg->FromUserName;
-
-            $this->response = sprintf($tpl,
-                $this->msg->FromUserName,
-                $this->msg->ToUserName,
-                time(),
-                $article['title'],
-                $article['desc'],
-                C('HOST').$this->reply['pic'],
-                $link
-            );
-        }
     }
 }

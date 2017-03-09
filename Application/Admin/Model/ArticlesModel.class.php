@@ -190,7 +190,7 @@ class ArticlesModel extends Model
 
         if ($link) {
             $fields .= sprintf(
-                ', (CASE WHEN type = %d THEN `link` ELSE `url`) AS link',
+                ', (CASE WHEN type = %d THEN `link` ELSE `url` END) AS link',
                 $this->type['link']
             );
         }

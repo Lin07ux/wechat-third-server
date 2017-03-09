@@ -21,6 +21,7 @@
 namespace ZeroWeChat;
 
 use SimpleXMLElement;
+use Think\Log;
 
 class XML
 {
@@ -29,7 +30,7 @@ class XML
      *
      * @param string $xml XML string
      *
-     * @return array|\SimpleXMLElement
+     * @return array|bool
      */
     public static function parse($xml)
     {
@@ -48,6 +49,7 @@ class XML
             return self::normalize($msg);
 
         } catch (\Exception $e) {
+            Log::record('【解析 XML 文本错误】'.$e, 'WARN');
             return false;
         }
     }

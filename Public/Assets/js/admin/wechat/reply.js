@@ -172,15 +172,18 @@ var vm = new Vue({
 
             this.ajaxPost(urls.setReply, data, msg, function (data) {
                 if (isKeyword) {
+                    var kw = self.keywords;
                     if (reply.id <= 0) {
                         reply.id = data;
-                        self.keywords.lists.unshift(Object.assign({}, reply));
+                        kw.lists.unshift(Object.assign({}, reply));
+                        kw.total++;
+                        kw.pages = Math.ceil(kw.total / kw.rows);
                     } else {
-                        self.keywords.current.keyword = reply.keyword;
-                        self.keywords.current.msg_type = reply.msg_type;
+                        kw.current.keyword = reply.keyword;
+                        kw.current.msg_type = reply.msg_type;
                     }
 
-                    self.keywords.showForm = false;
+                    kw.showForm = false;
                 } else {
                     if (reply.id <= 0) reply.id = data;
                     reply.is_set = true;

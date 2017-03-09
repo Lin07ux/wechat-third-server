@@ -10,6 +10,8 @@
 namespace ZeroWeChat;
 
 
+use Think\Log;
+
 class User
 {
     const API_GET       = 'https://api.weixin.qq.com/cgi-bin/user/info';
@@ -54,7 +56,7 @@ class User
         $user = Util::httpGet(self::API_GET, $params);
 
         if (isset($user['code']) && $user['code']) {
-            \Think\Log::record('[操作错误]获取 '.$openid.' 的用户信息失败。'.$user['msg'], 'ERR');
+            Log::record('[操作错误]获取 '.$openid.' 的用户信息失败。'.$user['msg'], 'WARN');
 
             return false;
         }

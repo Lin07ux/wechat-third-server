@@ -273,7 +273,7 @@ class ReplyModel extends Model
      * @param string $type    回复类型
      * @param string $keyword 关键词(可选)
      *
-     * @return bool|null|array
+     * @return bool|array
      */
     public function getReply($type, $keyword = '')
     {
@@ -285,7 +285,7 @@ class ReplyModel extends Model
 
         $where = ['type' => $this->replyType[$type]];
         if ('keyword' == $type) {
-            if (!$keyword) return null;
+            if (!$keyword) return false;
 
             $where['keyword'] = $keyword;
         }
@@ -308,7 +308,7 @@ class ReplyModel extends Model
 
             // 图文消息处理
             if ('news' == $reply['msg_type']) {
-                $news = D('Admin/Articles')->news($reply['news'], $wx_appid, true);
+                $news = D('Admin/Articles')->news($reply['news'], true);
 
                 if (!$news) return false;
 
@@ -344,7 +344,7 @@ class ReplyModel extends Model
 
             // 图文消息处理
             if ($this->msgType['news'] == $reply['msg_type']) {
-                $news = D('Admin/Articles')->news($reply['news'], $wx_appid, $forReply);
+                $news = D('Admin/Articles')->news($reply['news'], $forReply);
 
                 if (!$news) return false;
 
