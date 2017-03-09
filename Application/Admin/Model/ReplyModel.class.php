@@ -322,19 +322,14 @@ class ReplyModel extends Model
     /**
      * 获取点击菜单时对应的回复消息
      *
-     * @param int    $id       回复消息的ID
-     * @param string $wx_appid 微信公众号APPID
-     * @param bool   $forReply 是否是用于微信回复接口
+     * @param int  $id       回复消息的ID
+     * @param bool $forReply 是否是用于微信回复接口
      *
      * @return bool|mixed
      */
-    public function getClickInfo($id, $wx_appid, $forReply = false)
+    public function getClickInfo($id, $forReply = false)
     {
-        $where = [
-            'id' => $id,
-            'wx_appid' => $wx_appid,
-            'type' => $this->replyType['click'],
-        ];
+        $where = ['id' => $id, 'type' => $this->replyType['click'],];
 
         $reply = $this->field('msg_type,content,media_id,title,music,hq_music,thumb,news')
             ->where($where)->find();

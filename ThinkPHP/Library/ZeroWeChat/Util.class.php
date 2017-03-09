@@ -9,10 +9,10 @@
 
 namespace ZeroWeChat;
 
+use Think\Log;
 
 class Util
 {
-
     /**
      * 生成随机字符串
      *
@@ -23,9 +23,11 @@ class Util
     public static function createNonceStr($length = 16) {
         $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         $str = "";
+
         for ($i = 0; $i < $length; $i++) {
             $str .= substr($chars, mt_rand(0, strlen($chars) - 1), 1);
         }
+
         return $str;
     }
 
@@ -42,13 +44,9 @@ class Util
         foreach ($params as $key => $val) {
             $query .= $key . '=' . $val . '&';
         }
-        // 如果有查询参数,则在首位加上 ?, 并去掉末尾的 &
-        // 然后拼合到 $url 中
-        if ($query) {
-            $query = '?' . $query;
-            $query = substr($query, 0, -1);
-            $url  .= $query;
-        }
+
+        // 如果有查询参数,则在首位加上 ?, 并去掉末尾的 &, 然后拼合到 $url 中
+        if ($query) $url .= '?' . substr($query, 0, -1);
 
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
@@ -60,8 +58,7 @@ class Util
         curl_setopt($curl, CURLOPT_URL, $url);
 
         if (curl_errno($curl)) {
-            // 记录错误日志
-            \Think\Log::record('[网络错误]'.curl_errno($curl).': '.curl_error($curl), 'ERR');
+            Log::record('[网络错误]'.curl_errno($curl).': '.curl_error($curl), 'ERR');
             $info = false;
         } else {
             $info = json_decode(curl_exec($curl), true);
@@ -92,7 +89,8 @@ class Util
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
 
         if (curl_errno($curl)) {
-            $info = array('code' => curl_errno($curl), 'msg' => curl_error($curl),);
+            Log::record('[网络错误]'.curl_errno($curl).': '.curl_error($curl), 'ERR');
+            $info = false;
         } else {
             $info = json_decode(curl_exec($curl), true);
         }
@@ -123,7 +121,8 @@ class Util
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
 
         if (curl_errno($curl)) {
-            $info = array('code' => curl_errno($curl), 'msg' => curl_error($curl),);
+            Log::record('[网络错误]'.curl_errno($curl).': '.curl_error($curl), 'ERR');
+            $info = false;
         } else {
             $info = json_decode(curl_exec($curl), true);
         }
@@ -138,10 +137,10 @@ class Util
      *
      * @param string $filename 文件名
      *
-     * @return object
+     * @return array
      */
-    public static function get_php_file($filename) {
-        return json_decode(trim(substr(file_get_contents($filename), 15)));
+    public static function getPhpFile($filename) {
+        return json_decode(trim(substr(file_get_contents($filename), 15)), true);
     }
 
     /**
@@ -150,38 +149,9 @@ class Util
      * @param string $filename 文件名
      * @param array $content  文件内容
      */
-    public static function set_php_file($filename, $content) {
+    public static function setPhpFile($filename, $content) {
         $fp = fopen($filename, "w");
         fwrite($fp, "<?php exit();?>" . json_encode($content));
         fclose($fp);
-    }
-
-    /**
-     * 将数组转成 xml
-     *
-     * @param array $arr 要转换的数组
-     *
-     * @return string
-     */
-    public static function arrayToXml($arr)
-    {
-        $xml = '<xml>';
-
-        if (is_array($arr)) {
-            foreach ($arr as $key => $val) {
-                $xml .= '<' . $key . '>';
-                if (is_numeric($val)) {
-                    $xml .= $val;
-                } else {
-                    $xml .= '<![CDATA[' . $val . ']]>';
-                }
-
-                $xml .= '</' . $key . '>';
-            }
-        }
-
-        $xml .= '</xml>';
-
-        return $xml;
     }
 }

@@ -5,7 +5,7 @@
 Vue.config.devtools = true;
 Vue.http.options.emulateJSON = true;
 
-new Vue({
+var vm = new Vue({
     el: "#reply",
     data: {
         loading: false,
@@ -37,16 +37,48 @@ new Vue({
         this.resetKeywordForm();
     },
     methods: {
+        msgTypeClass: function (reply, type) {
+            var active = false;
+            switch (type.toLowerCase()) {
+                case 'text':
+                    if (reply.msg_type == 0) active = true;
+                    break;
+                case 'image':
+                    if (reply.msg_type == 1) active = true;
+                    break;
+                case 'news':
+                    if (reply.msg_type == 2) active = true;
+                    break;
+            }
+
+            return {
+                'btn-primary active': active,
+                'btn-secondary': !active
+            };
+        },
+        setMsgType: function (reply, type) {
+            switch (type.toLowerCase()) {
+                case 'text':
+                    reply.msg_type = 0;
+                    break;
+                case 'image':
+                    reply.msg_type = 1;
+                    break;
+                case 'news':
+                    reply.msg_type = 2;
+                    break;
+            }
+        },
         isText: function (type) { return type == 0; },
-        isPic: function (type) { return type == 1; },
+        isImage: function (type) { return type == 1; },
         isNews: function (type) { return type == 2; },
 
         // 初始化回复设置数据
         initData: function () {
             var self = this;
             this.ajaxGet(urls.all, {}, '获取数据中...', function (data) {
-                Object.assign(self.subscribe, data.subscribe);
-                Object.assign(self.auto, data.auto);
+                self.subscribe = data.subscribe;
+                self.auto = data.auto;
                 Object.assign(self.keywords, data.keywords);
 
                 var sub = self.subscribe;

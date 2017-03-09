@@ -33,6 +33,46 @@ class MenusModel extends Model
     );
 
     /**
+     * 获取全部的菜单信息
+     *
+     * @param bool   $forReply 是否用于微信回复接口
+     *
+     * @return array
+     */
+    public function menus($forReply = false)
+    {
+        $field = $forReply
+            ? 'id,name,type,`view` as `url`,`reply` as `key`'
+            : 'id,ordering,name,type,view,reply';
+
+        // 查找所有一级菜单, 最多只有三个
+        $menus = $this->field($field)
+            ->where(['parent' => ['exp', 'is NULL']])
+            ->order('ordering asc, id asc')
+            ->limit(3)->select();
+
+        if (!$menus) return [];
+
+        foreach ($menus as &$m) {
+            if ($m['type'] == $this->type['parent']) {
+                // 如果是父级菜单则获取其子菜单,最多5个子菜单
+                $sub_button = $this->field($field)
+                    ->where(['parent' => $m['id']])
+                    ->order('ordering asc, id asc')
+                    ->limit(5)->select();
+
+                $m['sub_button'] = $sub_button ?: [];
+
+            } elseif ($m['type'] == $this->type['reply'] && !$forReply) {
+                // 如果是回复菜单则获取其回复的信息
+                $m['reply'] = D('Reply')->getClickInfo($m['reply']);
+            }
+        }
+
+        return $menus;
+    }
+
+    /**
      * 检查菜单数据
      *
      * @param array $data 菜单的数据信息
@@ -67,7 +107,7 @@ class MenusModel extends Model
         $menuData = $this->checkData($data);
         if (!$menuData) return false;
 
-        // 如果是回复类型的菜单,则需要先创建回复信息
+        // 如果是回复类型的菜单则需要先创建回复信息
         if ($menuData['type'] == $this->type['reply']) {
             $replyData = $data['reply'];
 
@@ -83,15 +123,19 @@ class MenusModel extends Model
 
             if (!isset($replyData['id']) || $replyData['id'] <= 0) {
                 $menuData['reply'] = $reply;
+            } else {
+                $menuData['reply'] = $replyData['id'];
             }
 
-            $result = $this->doSet($menuData);
+            $result = $this->saveMenu($menuData);
             $result ? $this->commit() : $this->rollback();
 
             return $result;
-        } else {
-            return $this->doSet($menuData);
         }
+
+        unset($menuData['reply']);
+
+        return $this->saveMenu($menuData);
     }
 
     /**
@@ -101,7 +145,7 @@ class MenusModel extends Model
      *
      * @return bool|mixed
      */
-    protected function doSet(array $data)
+    protected function saveMenu(array $data)
     {
         if (!isset($data['id']) || $data['id'] <= 0) {
             return $this->add($data);
@@ -111,62 +155,22 @@ class MenusModel extends Model
     }
 
     /**
-     * 获取全部的菜单信息
-     *
-     * @param bool   $forReply 是否用于微信回复接口
-     *
-     * @return array
-     */
-    public function getMenus($forReply = false)
-    {
-        $field = $forReply
-            ? 'id,name,type,`view` as `url`,`reply` as `key`'
-            : 'id,ordering,name,type,view,reply';
-
-        $menus = $this->field($field)
-            ->where(['parent' => ['exp', 'is NULL']])
-            ->order('ordering asc, id asc')
-            ->select();
-
-        if (!$menus) return [];
-
-        foreach ($menus as &$m) {
-            if ($m['type'] == $this->type['parent']) {
-
-                $m['sub_button'] = $this->field($field)
-                    ->where(['wx_appid' => $wx_appid, 'parent' => $m['id']])
-                    ->order('ordering asc, id asc')
-                    ->select();
-
-                if (!$m['sub_button']) $m['sub_button'] = [];
-
-            } elseif ($m['type'] == $this->type['reply'] && !$forReply) {
-
-                $m['reply'] = D('Reply')->getClickInfo($m['reply'], $wx_appid);
-            }
-        }
-
-        return $menus;
-    }
-
-    /**
      * 获取菜单设置的回复消息
      *
-     * @param int    $id
-     * @param string $wx_appid 微信公众号APPID
+     * @param int $id 菜单 ID
      *
      * @return bool|mixed
      */
-    public function getMenuReply($id, $wx_appid)
+    public function getMenuReply($id)
     {
-        $where = ['id' => $id, 'wx_appid' => $wx_appid, 'type' => $this->type['reply']];
+        $where = ['id' => $id, 'type' => $this->type['reply']];
         $replyId = $this->where($where)->getField('reply');
         if (!$replyId) {
             $this->error = '菜单回复信息不存在';
             return false;
         }
 
-        $reply = D('WxReply')->getClickInfo($replyId, $wx_appid);
+        $reply = D('Reply')->getClickInfo($replyId);
         if (!$reply) {
             $this->error = '菜单回复信息不存在';
             return false;
@@ -180,14 +184,13 @@ class MenusModel extends Model
     /**
      * 删除菜单
      *
-     * @param int    $id       菜单的ID
-     * @param string $wx_appid 微信公众号APPID
+     * @param int $id 菜单的ID
      *
      * @return bool
      */
-    public function remove($id, $wx_appid)
+    public function remove($id)
     {
-        $where = ['id' => $id, 'wx_appid' => $wx_appid];
+        $where = ['id' => $id];
         $info = $this->field('id, type')->where($where)->find();
 
         if (!$info) {
@@ -199,8 +202,8 @@ class MenusModel extends Model
         if ($info['type'] == $this->type['parent']) {
             $this->startTrans();
 
-            $sub = $this->where(['wx_appid'=>$wx_appid, 'parent'=>$id])->delete();
-            if ($sub && $this->where($where)->delete()) {
+            $sub = $this->where(['parent' => $id])->delete();
+            if ($sub !== false && $this->where($where)->delete()) {
                 $this->commit();
                 return true;
             }

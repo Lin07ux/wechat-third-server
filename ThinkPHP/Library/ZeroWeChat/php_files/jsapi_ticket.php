@@ -1,2 +1,1 @@
-<?php exit();?>
-{"jsapi_ticket":"","expire_time":0}
+<?php exit();?>{"jsapi_ticket":"","expire_time":0}

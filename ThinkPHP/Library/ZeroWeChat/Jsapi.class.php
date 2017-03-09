@@ -16,6 +16,7 @@ class Jsapi
      * @var string 微信公众号appId
      */
     private $appId;
+
     /**
      * @var string 微信公众号appSecret
      */
@@ -63,19 +64,18 @@ class Jsapi
         ];
     }
 
-
     /**
      * 获取jssdk的ticket
      *
      * @return string|bool
      */
     private function ticket() {
-        $data = Util::get_php_file(dirname(__FILE__).'/php_files/jsapi_ticket.php');
+        $data = Util::getPhpFile(dirname(__FILE__).'/php_files/jsapi_ticket.php');
 
-        if ($data->expires_in < time()) {
+        if ($data['expires_in'] < time()) {
             $ticket = $this->refresh();
         } else {
-            $ticket = $data->jsapi_ticket;
+            $ticket = $data['jsapi_ticket'];
         }
 
         return $ticket;
@@ -107,7 +107,7 @@ class Jsapi
             'jsapi_ticket' => $res['ticket'],
             'expires_in'   => time() + $res['expires_in'] - 1800,
         ];
-        Util::set_php_file(dirname(__FILE__).'/php_files/jsapi_ticket.php', $data);
+        Util::setPhpFile(dirname(__FILE__).'/php_files/jsapi_ticket.php', $data);
 
         return $res['ticket'];
     }

@@ -26,9 +26,7 @@ class WechatController extends CommonController
      */
     public function menu()
     {
-        $this->assign('title', '自定义菜单')
-            ->assign('menus', D('Menus')->getMenus())
-            ->display();
+        $this->assign('title', '自定义菜单')->display();
     }
 
     /**

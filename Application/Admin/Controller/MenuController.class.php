@@ -10,20 +10,19 @@
 namespace Admin\Controller;
 
 use ZeroWeChat\Menu;
+use ZeroWeChat\Wechat;
 
 class MenuController extends CommonController
 {
     /**
-     * 预检: 是否绑定了微信公众号
+     * 获取自定义菜单列表
      */
-    public function _initialize()
+    public function lists()
     {
-        parent::_initialize();
+        $menus = D('Menus')->menus();
+        $res = ['code' => 0, 'msg' => '获取菜单列表成功', 'data' => $menus];
 
-        if (!session('user.wx_appid')) {
-            $this->ajaxReturn(['code' => 1101, 'msg' => '请先授权绑定微信公众号']);
-            exit();
-        }
+        $this->ajaxReturn($res);
     }
 
     /**
@@ -34,12 +33,11 @@ class MenuController extends CommonController
         if (!IS_POST) $this->send404();
 
         $data = I('post.');
-        $data['wx_appid'] = session('user.wx_appid');
         if (isset($data['reply']) && isset($data['reply']['content'])) {
             $data['reply']['content'] = $_POST['reply']['content'];
         }
 
-        $Menu = D('WxMenus');
+        $Menu = D('Menus');
         $result = $Menu->setMenu($data);
         $isEdit = isset($data['id']) && $data['id'] > 0 ? true : false;
 
@@ -63,8 +61,8 @@ class MenuController extends CommonController
      */
     public function reply()
     {
-        $Menu = D('WxMenus');
-        $info = $Menu->getMenuReply(I('get.id'), session('user.wx_appid'));
+        $Menu = D('Menus');
+        $info = $Menu->getMenuReply(I('get.id'));
 
         if ($info) {
             $res = ['code' => 0, 'msg' => '获取子菜单信息成功', 'data' => $info];
@@ -83,8 +81,8 @@ class MenuController extends CommonController
     {
         if (!IS_POST) $this->send404();
 
-        $Menu = D('WxMenus');
-        $result = $Menu->remove(I('post.id'), session('user.wx_appid'));
+        $Menu = D('Menus');
+        $result = $Menu->remove(I('post.id'));
 
         if ($result) {
             $res = ['code' => 0, 'msg' => '菜单删除成功'];
@@ -103,9 +101,11 @@ class MenuController extends CommonController
     {
         if (!IS_POST) $this->send404();
 
-        $access_token = $this->accessToken();
+        $wechat = Wechat::getInstance(C('WECHAT.APPID'), C('WECHAT.SECRET'));
+        $access_token = $wechat->getAccessToken();
+
         if ($access_token) {
-            $menus = D('WxMenus')->getMenus(session('user.wx_appid'), true);
+            $menus = D('Menus')->menus(true);
             $Menu = new Menu($access_token);
             $result = $Menu->publish($menus);
 
@@ -113,10 +113,10 @@ class MenuController extends CommonController
                 $res = ['code' => 0, 'msg' => '菜单发布成功'];
             } else {
                 $err = $Menu->getError();
-                $res = ['code' => 1502, 'msg' => $err ?: '菜单发布失败！请稍后重试。', 'data' => $menus];
+                $res = ['code' => 101, 'msg' => $err ?: '菜单发布失败！请稍后重试。'];
             }
         } else {
-            $res = ['code' => 1052, 'msg' => '获取微信公众号access_token失败。请稍后重试！'];
+            $res = ['code' => 101, 'msg' => '获取微信公众号access_token失败。请稍后重试！'];
         }
 
         $this->ajaxReturn($res);

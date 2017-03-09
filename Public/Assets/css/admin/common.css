@@ -30,6 +30,7 @@ button{cursor:pointer}
 }
 .absolute{position:absolute;top:0;left:0;bottom:0;right:0;}
 .checkbox label + label{margin-left:2.5em;}
+.show{display:block}
 
 
 /* bootstrap 修改 */
@@ -41,6 +42,7 @@ button{cursor:pointer}
 .input-group .form-control{z-index:initial;}
 body > .modal-backdrop{z-index: 1039;}
 form .control-label.required:after{content:'*';position:absolute;color:#f00;margin-left:3px;font-size:1.3em;}
+form.inline label{text-align:right}
 .bg-warning, .bg-success, .bg-info{padding:15px;}
 .input-group-addon:not(:first-child):not(:last-child) {
     border-left: 0;
@@ -63,8 +65,9 @@ form .control-label.required:after{content:'*';position:absolute;color:#f00;marg
 .bg-plus:before{width:30px;height:2px;}
 .bg-plus:after{width:2px;height:30px;}
 .bg-plus:hover:before,.bg-plus:hover:after{background-color:#808080;}
+.modal{overflow-y:auto}
 .modal .mask{
-    position: absolute;
+    position: fixed;
     display: block;
     top: 0;
     right: 0;
@@ -383,31 +386,28 @@ body.row, tr.row{margin:0;padding:0;}
  *  微信相关
  *******************/
 /* 微信自动回复 */
-.wx-reply .wx-news{width:382px;padding:15px;margin:0;list-style:none}
-.wx-reply .article{position:relative;height:80px;padding:5px 0}
-.wx-reply .article:first-child{height:185px;padding:0 0 5px}
-.wx-reply .article.only{height:auto}
-.wx-reply .article + .article{border-top:1px solid #e0e0e0}
-.wx-reply .article .fa{position:absolute;right:3px;top:3px;color:red;cursor:pointer}
-.wx-reply .article .cover{position:relative;height:100%;overflow:hidden;background:no-repeat center;background-size:100% auto}
-.wx-reply .article .cover .title{position:absolute;bottom:0;padding:5px;margin:0;font-size:16px}
-.wx-reply .article.only .cover{height:150px;margin-bottom:10px}
-.wx-reply .article .other{display:table;vertical-align:middle}
-.wx-reply .article .other .title{display:table-cell;width:300px}
-.wx-reply .article .other .thumb{width:68px;height:68px}
-.wx-reply .search-article{display:block;}
+.wx-news{width:382px;padding:15px;margin:0;list-style:none}
+.wx-news .article{position:relative;height:80px;padding:5px 0}
+.wx-news .article:first-child{height:185px;padding:0 0 5px}
+.wx-news .article.only{height:auto}
+.wx-news .article + .article{border-top:1px solid #e0e0e0}
+.wx-news .article .fa{position:absolute;right:3px;top:3px;color:red;cursor:pointer}
+.wx-news .article .cover{position:relative;height:100%;overflow:hidden;background:no-repeat center;background-size:100% auto}
+.wx-news .article .cover .title{position:absolute;bottom:0;padding:5px;margin:0;font-size:16px}
+.wx-news .article.only .cover{height:150px;margin-bottom:10px}
+.wx-news .article .other{display:table;vertical-align:middle}
+.wx-news .article .other .title{display:table-cell;width:300px}
+.wx-news .article .other .thumb{width:68px;height:68px}
 /* 自定义菜单 */
-.wx-menu .menu-publish{position:absolute;right:2em;top:2em;}
-.wx-menu .menu-form{margin-top:25px;}
-.wx-menu .wx-sub-menus{width:10em;text-align:center;padding:5px 12px;}
-.wx-menu .wx-sub-menus .sub-menu{margin:0 auto;padding:10px 0;width:8em;color:#8c8c8c;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;cursor:pointer;}
-.wx-menu .wx-sub-menus .sub-menu:hover{color:#222;}
-.wx-menu .wx-sub-menus .sub-menu + .sub-menu{border-top:1px solid #e8e7e7;}
-.wx-menu .wx-sub-menus .bg-plus{text-indent:-999px;}
-.wx-menu .wx-sub-menus .bg-plus:after{height:20px;}
-.wx-menu .sub-form{overflow-x:hidden;overflow-y:auto;}
+.wx-menu .wx-sub-menus{width:10em;text-align:center;padding:5px 12px}
+.wx-menu .wx-sub-menus .sub-menu{margin:0 auto;padding:10px 0;width:8em;color:#8c8c8c;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;cursor:pointer}
+.wx-menu .wx-sub-menus .sub-menu:hover{color:#222}
+.wx-menu .wx-sub-menus .sub-menu + .sub-menu{border-top:1px solid #e8e7e7}
+.wx-menu .wx-sub-menus .bg-plus{text-indent:-999px}
+.wx-menu .wx-sub-menus .bg-plus:after{height:20px}
+.wx-menu .sub-form .modal-dialog{max-width:552px}
 
 /* 微信文章 */
 .wx-articles form .upload{margin:0 auto}
 .wx-articles .upload.cover{width:245px;height:137px}
-.wx-articles .upload.thumb{width:137px;height:137px;}
+.wx-articles .upload.thumb{width:137px;height:137px}

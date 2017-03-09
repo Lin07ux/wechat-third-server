@@ -15,50 +15,48 @@
 
     <div class="tab-pane subscribe" v-show="tab == 'subscribe'">
         <div class="btn-group mb-2">
-            <button type="button" class="btn" :class="{ 'btn-primary active': isText(subscribe.msg_type), 'btn-secondary': !isText(subscribe.msg_type) }" @click="subscribe.msg_type = 0">文本</button>
-            <button type="button" class="btn" :class="{ 'btn-primary active': isPic(subscribe.msg_type), 'btn-secondary': !isPic(subscribe.msg_type) }" @click="subscribe.msg_type = 1">图片</button>
-            <button type="button" class="btn" :class="{ 'btn-primary active': isNews(subscribe.msg_type), 'btn-secondary': !isNews(subscribe.msg_type) }" @click="subscribe.msg_type = 2">图文</button>
+            <button class="btn" :class="msgTypeClass(subscribe, 'text')" @click="setMsgType(subscribe, 'text')">文本</button>
+            <button class="btn" :class="msgTypeClass(subscribe, 'image')" @click="setMsgType(subscribe, 'image')">图片</button>
+            <button class="btn" :class="msgTypeClass(subscribe, 'news')" @click="setMsgType(subscribe, 'news')">图文</button>
         </div>
 
-        <div>
-            <textarea class="form-control" rows="10" placeholder="填写关注回复内容" v-model="subscribe.content" v-show="isText(subscribe.msg_type)"></textarea>
+        <textarea class="form-control" rows="10" placeholder="填写关注回复内容" v-model="subscribe.content" v-show="isText(subscribe.msg_type)"></textarea>
 
-            <div v-show="isPic(subscribe.msg_type)">
-                <p class="bg-warning">图片消息暂不支持</p>
-            </div>
-
-            <ul class="card wx-news" v-show="isNews(subscribe.msg_type)">
-                <li class="article"
-                    :class="{ only: subscribe.news.length == 1 }"
-                    v-for="(article, index) in subscribe.news"
-                >
-                    <template v-if="subscribe.news.length == 1">
-                        <h4 class="title">{{ article.title }}</h4>
-                        <div class="cover" :style="{ backgroundImage: 'url(' + article.cover + ')' }"></div>
-                        <p class="desc">{{ article.desc }}</p>
-                    </template>
-
-                    <template v-else>
-                        <div class="cover"
-                             v-if="index < 1"
-                             :style="{ backgroundImage: 'url(' + article.cover + ')' }"
-                        >
-                            <p class="title">{{ article.title }}</p>
-                        </div>
-                        <div v-else class="other">
-                            <p class="title">{{ article.title }}</p>
-                            <img class="thumb" :src="article.thumb">
-                        </div>
-                    </template>
-
-                    <i class="fa fa-close" @click="subscribe.news.splice(index, 1)"></i>
-                </li>
-                <li class="article bg-plus"
-                    v-if="subscribe.news.length < 8"
-                    @click="showSearch(subscribe.news)"
-                ></li>
-            </ul>
+        <div v-show="isImage(subscribe.msg_type)">
+            <p class="bg-warning">图片消息暂不支持</p>
         </div>
+
+        <ul class="card wx-news" v-show="isNews(subscribe.msg_type)">
+            <li class="article"
+                :class="{ only: subscribe.news.length == 1 }"
+                v-for="(article, index) in subscribe.news"
+            >
+                <template v-if="subscribe.news.length == 1">
+                    <h4 class="title">{{ article.title }}</h4>
+                    <div class="cover" :style="{ backgroundImage: 'url(' + article.cover + ')' }"></div>
+                    <p class="desc">{{ article.desc }}</p>
+                </template>
+
+                <template v-else>
+                    <div class="cover"
+                         v-if="index < 1"
+                         :style="{ backgroundImage: 'url(' + article.cover + ')' }"
+                    >
+                        <p class="title">{{ article.title }}</p>
+                    </div>
+                    <div v-else class="other">
+                        <p class="title">{{ article.title }}</p>
+                        <img class="thumb" :src="article.thumb">
+                    </div>
+                </template>
+
+                <i class="fa fa-close" @click="subscribe.news.splice(index, 1)"></i>
+            </li>
+            <li class="article bg-plus"
+                v-if="subscribe.news.length < 8"
+                @click="showSearch(subscribe.news)"
+            ></li>
+        </ul>
 
         <div class="mt-2">
             <button type="button" class="btn btn-success" @click="setReply(subscribe)">保存设置</button>
@@ -68,50 +66,48 @@
 
     <div class="tab-pane" v-show="tab == 'auto'">
         <div class="btn-group mb-2">
-            <button type="button" class="btn" :class="{ 'btn-primary active': isText(auto.msg_type), 'btn-secondary': !isText(auto.msg_type) }" @click="auto.msg_type = 0">文本</button>
-            <button type="button" class="btn" :class="{ 'btn-primary active': isPic(auto.msg_type), 'btn-secondary': !isPic(auto.msg_type) }" @click="auto.msg_type = 1">图片</button>
-            <button type="button" class="btn" :class="{ 'btn-primary active': isNews(auto.msg_type), 'btn-secondary': !isNews(auto.msg_type) }" @click="auto.msg_type = 2">图文</button>
+            <button type="button" class="btn" :class="msgTypeClass(auto, 'text')" @click="setMsgType(auto, 'text')">文本</button>
+            <button type="button" class="btn" :class="msgTypeClass(auto, 'image')" @click="setMsgType(auto, 'image')">图片</button>
+            <button type="button" class="btn" :class="msgTypeClass(auto, 'news')" @click="setMsgType(auto, 'news')">图文</button>
         </div>
 
-        <div>
-            <textarea class="form-control" rows="10" placeholder="填写关注回复内容" v-model="auto.content" v-show="isText(auto.msg_type)"></textarea>
+        <textarea class="form-control" rows="10" placeholder="填写关注回复内容" v-model="auto.content" v-show="isText(auto.msg_type)"></textarea>
 
-            <div v-show="isPic(auto.msg_type)">
-                <p class="bg-warning">图片消息暂不支持</p>
-            </div>
-
-            <ul class="card wx-news" v-show="isNews(auto.msg_type)">
-                <li class="article"
-                    :class="{ only: auto.news.length == 1 }"
-                    v-for="(article, index) in auto.news"
-                >
-                    <template v-if="auto.news.length == 1">
-                        <h4 class="title">{{ article.title }}</h4>
-                        <div class="cover" :style="{ backgroundImage: 'url(' + article.cover + ')' }"></div>
-                        <p class="desc">{{ article.desc }}</p>
-                    </template>
-
-                    <template v-else>
-                        <div class="cover"
-                             v-if="index < 1"
-                             :style="{ backgroundImage: 'url(' + article.cover + ')' }"
-                        >
-                            <p class="title">{{ article.title }}</p>
-                        </div>
-                        <div v-else class="other">
-                            <p class="title">{{ article.title }}</p>
-                            <img class="thumb" :src="article.thumb">
-                        </div>
-                    </template>
-
-                    <i class="fa fa-close" @click="auto.news.splice(index, 1)"></i>
-                </li>
-                <li class="article bg-plus"
-                    v-if="auto.news.length < 8"
-                    @click="showSearch(auto.news)"
-                ></li>
-            </ul>
+        <div v-show="isImage(auto.msg_type)">
+            <p class="bg-warning">图片消息暂不支持</p>
         </div>
+
+        <ul class="card wx-news" v-show="isNews(auto.msg_type)">
+            <li class="article"
+                :class="{ only: auto.news.length == 1 }"
+                v-for="(article, index) in auto.news"
+            >
+                <template v-if="auto.news.length == 1">
+                    <h4 class="title">{{ article.title }}</h4>
+                    <div class="cover" :style="{ backgroundImage: 'url(' + article.cover + ')' }"></div>
+                    <p class="desc">{{ article.desc }}</p>
+                </template>
+
+                <template v-else>
+                    <div class="cover"
+                         v-if="index < 1"
+                         :style="{ backgroundImage: 'url(' + article.cover + ')' }"
+                    >
+                        <p class="title">{{ article.title }}</p>
+                    </div>
+                    <div v-else class="other">
+                        <p class="title">{{ article.title }}</p>
+                        <img class="thumb" :src="article.thumb">
+                    </div>
+                </template>
+
+                <i class="fa fa-close" @click="auto.news.splice(index, 1)"></i>
+            </li>
+            <li class="article bg-plus"
+                v-if="auto.news.length < 8"
+                @click="showSearch(auto.news)"
+            ></li>
+        </ul>
 
         <div class="mt-2">
             <button type="button" class="btn btn-success" @click="setReply(auto)">保存设置</button>
@@ -205,7 +201,7 @@
                 </div>
             </div>
 
-            <div class="form-group row" v-show="isPic(keywords.form.msg_type)">
+            <div class="form-group row" v-show="isImage(keywords.form.msg_type)">
                 <label class="col-sm-2 col-form-label required">回复图片</label>
                 <div class="col-sm-10"><p class="bg-warning">暂不支持图片回复</p></div>
             </div>
@@ -254,7 +250,7 @@
         </form>
     </div>
 
-    <div class="modal search-article" v-show="search.show">
+    <div class="modal show" v-show="search.show">
         <div class="mask" @click="search.show = false"></div>
         <div class="modal-dialog">
             <div class="modal-content" :class="{ 'loading-after': search.searching }">

@@ -1,0 +1,330 @@
+<layout name="Public/layout" />
+
+<div class="main wx-menu" id="wx-menu" v-cloak>
+    <div class="btn-group">
+        <button class="btn" v-for="menu in menus" :class="menuClass(menu)" @click="editParent(menu)">{{ menu.name }}</button>
+
+        <button class="btn" :class="addBtnClass" @click="addParentMenu" v-show="menus.length < 3">添加菜单</button>
+    </div>
+
+    <button class="btn btn-primary float-right" v-show="menus.length" @click="publish">立即发布</button>
+
+    <p class="bg-warning mt-4" v-if="!menus.length && !showForm">暂未设置菜单。请点击上方的“添加菜单”按钮进行添加。</p>
+
+    <form method="post" class="mt-4 inline" v-show="showForm" @submit.prevent="saveParent">
+        <div class="form-group row">
+            <label for="name" class="col-sm-2 col-form-label required">菜单名称</label>
+            <div class="col-sm-10">
+                <input type="text" class="form-control" id="name" placeholder="设置菜单的名称" v-model="form.name" @input="checkName($event, true)" required>
+                <small class="form-text text-danger" v-show="err.parent">字数已超上限。</small>
+                <small class="form-text text-muted">字数不超过 4 个汉字或 8 个字母。</small>
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label for="ordering" class="col-sm-2 col-form-label required">次序</label>
+            <div class="col-sm-10">
+                <input type="number" class="form-control" id="ordering" placeholder="设置菜单的显示次序" v-model.number="form.ordering" required>
+                <small class="form-text text-muted">菜单将按照次序值升序排列。</small>
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label required">菜单类型</label>
+            <div class="col-sm-10">
+                <div class="col-form-label form-check-inline">
+                    <label class="radio-inline">
+                        <input type="radio" name="type" value="0" v-model.number="form.type">
+                        父级菜单
+                    </label>
+                </div>
+                <div class="col-form-label form-check-inline">
+                    <label class="radio-inline">
+                        <input type="radio" name="type" value="1" v-model.number="form.type">
+                        跳转网页
+                    </label>
+                </div>
+                <div class="col-form-label form-check-inline">
+                    <label class="radio-inline">
+                        <input type="radio" name="type" value="2" v-model.number="form.type">
+                        发送消息
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group row" v-show="form.type == 0">
+            <label class="col-sm-2 col-form-label required">子菜单</label>
+            <div class="col-sm-10">
+                <p class="form-control-static text-muted" v-show="!form.id">保存后可以在该一级菜单下添加最多 5 个子菜单</p>
+                <ul class="list-unstyled card wx-sub-menus" v-show="form.id">
+                    <li class="sub-menu" v-for="sub in form.sub_button" v-text="sub.name" @click="editSubMenu(sub)"></li>
+                    <li class="sub-menu bg-plus" v-show="form.sub_button.length < 5" @click="addSubMenu">添加子菜单</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="form-group row" v-show="form.type == 1">
+            <label for="view" class="col-sm-2 col-form-label required">跳转地址</label>
+            <div class="col-sm-10">
+                <input type="url" id="view" class="form-control" placeholder="http(s)://" v-model="form.view">
+                <small class="form-text text-muted">点击该菜单会跳到设置的链接地址页面。</small>
+            </div>
+        </div>
+
+        <div v-show="form.type == 2">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label required">回复类型</label>
+                <div class="col-sm-10">
+                    <div class="col-form-label form-check-inline">
+                        <label class="radio-inline">
+                            <input type="radio" name="msg_type" value="0" v-model.number="form.reply.msg_type">
+                            文本
+                        </label>
+                    </div>
+                    <div class="col-form-label form-check-inline">
+                        <label class="radio-inline">
+                            <input type="radio" name="msg_type" value="2" v-model.number="form.reply.msg_type">
+                            图文
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group row" v-show="form.reply.msg_type == 0">
+                <label for="formContent" class="col-sm-2 col-form-label required">回复内容</label>
+                <div class="col-sm-10">
+                    <textarea class="form-control" id="formContent" rows="10" placeholder="填写回复内容" v-model="form.reply.content"></textarea>
+                </div>
+            </div>
+
+            <div class="form-group row" v-show="form.reply.msg_type == 2">
+                <label class="col-sm-2 col-form-label required">图文消息</label>
+                <div class="col-sm-10">
+                    <ul class="card wx-news">
+                        <li class="article"
+                            :class="{ only: form.reply.news.length == 1 }"
+                            v-for="(article, index) in form.reply.news"
+                        >
+                            <template v-if="form.reply.news.length == 1">
+                                <h4 class="title">{{ article.title }}</h4>
+                                <div class="cover" :style="{ backgroundImage: 'url(' + article.cover + ')' }"></div>
+                                <p class="desc">{{ article.desc }}</p>
+                            </template>
+
+                            <template v-else>
+                                <div class="cover"
+                                     v-if="index < 1"
+                                     :style="{ backgroundImage: 'url(' + article.cover + ')' }"
+                                >
+                                    <p class="title">{{ article.title }}</p>
+                                </div>
+                                <div v-else class="other">
+                                    <p class="title">{{ article.title }}</p>
+                                    <img class="thumb" :src="article.thumb">
+                                </div>
+                            </template>
+
+                            <i class="fa fa-close" @click="form.reply.news.splice(index, 1)"></i>
+                        </li>
+                        <li class="article bg-plus"
+                            v-if="form.reply.news.length < 8"
+                            @click="showSearch(form.reply.news)"
+                        ></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group text-center">
+            <button type="submit" class="btn btn-success">立即保存</button>
+            <button type="button" class="btn btn-secondary" @click="unAddParent" v-show="!form.id">取消添加</button>
+            <button type="button" class="btn btn-danger" @click="delMenu(true)" v-show="form.id">删除菜单</button>
+        </div>
+    </form>
+
+    <form method="post" class="modal show inline sub-form" v-show="showSubForm" @submit.prevent="saveSub">
+        <div class="mask" @click="showSubForm = false"></div>
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ subForm.id ? '编辑子菜单' : '添加子菜单' }}</h5>
+                    <button type="button" class="close" @click="showSubForm = false">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="form-group row">
+                        <label for="sub-name" class="col-sm-3 col-form-label required">菜单名称</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="sub-name" placeholder="设置菜单的名称" v-model="subForm.name" @input="checkName($event)" required>
+                            <small class="form-text text-danger" v-show="err.sub">字数已超上限。</small>
+                            <small class="form-text text-muted">字数不超过 8 个汉字或 16 个字母。</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="sub-ordering" class="col-sm-3 col-form-label required">次序</label>
+                        <div class="col-sm-9">
+                            <input type="number" class="form-control" id="sub-ordering" placeholder="设置菜单的显示次序" v-model="subForm.ordering" number required>
+                            <small class="form-text text-muted">菜单将按照次序值升序排列。</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label class="col-sm-3 col-form-label required">菜单类型</label>
+                        <div class="col-sm-9">
+                            <div class="col-form-label form-check-inline">
+                                <label class="radio-inline">
+                                    <input type="radio" name="type" value="1" v-model.number="subForm.type">
+                                    跳转网页
+                                </label>
+                            </div>
+                            <div class="col-form-label form-check-inline">
+                                <label class="radio-inline">
+                                    <input type="radio" name="type" value="2" v-model.number="subForm.type">
+                                    发送消息
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group row" v-show="subForm.type == 1">
+                        <label for="sub-view" class="col-sm-3 col-form-label required">跳转地址</label>
+                        <div class="col-sm-9">
+                            <input type="url" id="sub-view" class="form-control" placeholder="http(s)://" v-model="subForm.view">
+                            <small class="form-text text-muted">点击该菜单会跳到设置的链接地址页面。</small>
+                        </div>
+                    </div>
+
+                    <div v-show="subForm.type == 2">
+                        <div class="form-group row">
+                            <label class="col-sm-3 col-form-label required">回复类型</label>
+                            <div class="col-sm-9">
+                                <div class="col-form-label form-check-inline">
+                                    <label class="radio-inline">
+                                        <input type="radio" name="msg_type" value="0" v-model.number="subForm.reply.msg_type">
+                                        文本
+                                    </label>
+                                </div>
+                                <div class="col-form-label form-check-inline">
+                                    <label class="radio-inline">
+                                        <input type="radio" name="msg_type" value="2" v-model.number="subForm.reply.msg_type">
+                                        图文
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group row" v-show="subForm.reply.msg_type == 0">
+                            <label for="subFormContent" class="col-sm-3 col-form-label required">回复内容</label>
+                            <div class="col-sm-9">
+                                <textarea class="form-control" id="subFormContent" rows="10" placeholder="填写回复内容" v-model="subForm.reply.content"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-group row" v-show="subForm.reply.msg_type == 2">
+                            <label class="col-sm-3 col-form-label required">图文消息</label>
+                            <div class="col-sm-9">
+                                <ul class="card wx-news">
+                                    <li class="article"
+                                        :class="{ only: subForm.reply.news.length == 1 }"
+                                        v-for="(article, index) in subForm.reply.news"
+                                    >
+                                        <template v-if="subForm.reply.news.length == 1">
+                                            <h4 class="title">{{ article.title }}</h4>
+                                            <div class="cover" :style="{ backgroundImage: 'url(' + article.cover + ')' }"></div>
+                                            <p class="desc">{{ article.desc }}</p>
+                                        </template>
+
+                                        <template v-else>
+                                            <div class="cover"
+                                                 v-if="index < 1"
+                                                 :style="{ backgroundImage: 'url(' + article.cover + ')' }"
+                                            >
+                                                <p class="title">{{ article.title }}</p>
+                                            </div>
+                                            <div v-else class="other">
+                                                <p class="title">{{ article.title }}</p>
+                                                <img class="thumb" :src="article.thumb">
+                                            </div>
+                                        </template>
+
+                                        <i class="fa fa-close" @click="subForm.reply.news.splice(index, 1)"></i>
+                                    </li>
+                                    <li class="article bg-plus"
+                                        v-if="form.reply.news.length < 8"
+                                        @click="showSearch(subForm.reply.news)"
+                                    ></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-success">立即保存</button>
+                        <button type="button" class="btn btn-secondary" v-show="!subForm.id" @click="showSubForm = false">取消添加</button>
+                        <button type="button" class="btn btn-danger" v-show="subForm.id" @click="delMenu(false)">删除菜单</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="modal show" v-show="search.show">
+        <div class="mask" @click="search.show = false"></div>
+        <div class="modal-dialog">
+            <div class="modal-content" :class="{ 'loading-after': search.searching }">
+                <div class="modal-header">
+                    <h5 class="modal-title">选择文章</h5>
+                    <button type="button" class="close" @click="search.show = false">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="form-group">
+                        <form method="get" class="input-group" @submit.prevent="doSearch">
+                            <input class="form-control" type="text" v-model="search.text" placeholder="文章标题">
+                            <button type="submit" class="input-group-addon">
+                                <i class="fa fa-search"></i>
+                            </button>
+                        </form>
+
+                        <table class="table table-hover mt-2">
+                            <tbody>
+                            <tr v-for="(a, index) in search.results">
+                                <td v-text="a.title"></td>
+                                <td width="30">
+                                    <button type="button" class="btn btn-sm btn-secondary" @click="select(a, index)">选择</button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading bg-mask" v-show="loading">
+        <div class="wrap">
+            <img src="/Assets/images/loading.svg">
+            <small class="load-msg">{{ loadMsg }}</small>
+        </div>
+    </div>
+</div>
+
+<assign name="load_script[]" value="/Assets/js/admin/wechat/menu.js" />
+<script>
+    var urls = {
+        lists: "{:U('Menu/lists')}",
+        setMenu: "{:U('Menu/save')}",
+        remove: "{:U('Menu/remove')}",
+        publish: "{:U('Menu/publish')}",
+        search: "{:U('Article/search')}",
+        getNews: "{:U('Article/news')}",
+        getReply: "{:U('Menu/reply')}"
+    }
+</script>

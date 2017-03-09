@@ -4,31 +4,30 @@
  * Author: Lin07ux
  * Date: 2016-07-01
  * Time: 15:36
- * Desc:
+ * Desc: 微信公众号基础类
  */
 
 namespace ZeroWeChat;
 
-/**
- * Class Wechat 微信基础类
- *
- * @package ZeroWeChat
- */
+use Think\Log;
+
 class Wechat
 {
     /**
-     * 获取基本access_token
+     * 获取基本 access_token
      */
-    const API_GET_ACCESS_TOKEN = 'https://api.weixin.qq.com/cgi-bin/token';
+    const GET_ACCESS_TOKEN = 'https://api.weixin.qq.com/cgi-bin/token';
+
     /**
      * 获取网页授权信息
      */
-    const API_SNS_OAUTH_INFO   = 'https://api.weixin.qq.com/sns/oauth2/access_token';
+    const SNS_OAUTH_INFO   = 'https://api.weixin.qq.com/sns/oauth2/access_token';
 
     /**
      * @var Wechat 该类的单例实例
      */
     private static $instance;
+
     /**
      * @var string 微信 AppID
      */
@@ -44,26 +43,29 @@ class Wechat
      */
     private $token;
 
+    private $accessTokenFile = '/php_files/access_token.php';
+
     /**
      * Wechat constructor.
      *
-     * @param $appId string
-     * @param $appSecret string
-     * @param $token string
+     * @param string $appId     公众号 AppId
+     * @param string $appSecret 公众号 APPSecret
+     * @param string $token     公众号 Token
      */
     private function __construct($appId, $appSecret, $token)
     {
         $this->appId     = $appId;
         $this->appSecret = $appSecret;
         $this->token     = $token;
+        $this->accessTokenFile = dirname(__FILE__) . $this->accessTokenFile;
     }
 
     /**
      * 获取该类的实例对象
      *
-     * @param string $appId 微信公众号的 AppID
+     * @param string $appId     微信公众号的 AppID
      * @param string $appSecret 微信公众号的AppSecret
-     * @param string $token 微信公众号第三方服务器的 Token
+     * @param string $token     微信公众号第三方服务器的 Token
      *
      * @return Wechat
      */
@@ -95,7 +97,7 @@ class Wechat
     }
 
     /**
-     * 刷新 access_token
+     * 获取 access_token
      *
      * @param bool $forceRefresh 是否强制刷新 access_token
      *
@@ -106,12 +108,12 @@ class Wechat
         if ($forceRefresh) {
             $token = $this->refreshAccessToken();
         } else {
-            $data = Util::get_php_file(dirname(__FILE__).'/php_files/access_token.php');
+            $data = Util::getPhpFile($this->accessTokenFile);
 
-            if ($data->expires_in <= time()) {
+            if ($data['expires_in'] <= time()) {
                 $token = $this->refreshAccessToken();
             } else {
-                $token = $data->access_token;
+                $token = $data['access_token'];
             }
         }
 
@@ -131,14 +133,13 @@ class Wechat
             'secret'     => $this->appSecret,
         );
 
-        $res = Util::httpGet(self::API_GET_ACCESS_TOKEN, $params);
-        if (!$res['access_token']) {
-            return false;
-        }
+        $res = Util::httpGet(self::GET_ACCESS_TOKEN, $params);
+
+        if (!$res || !isset($res['access_token'])) return false;
 
         // 计算 access_token 的有效期,并写入到文件中
         $res['expires_in'] = time() + $res['expires_in'] - 1800;
-        Util::set_php_file(dirname(__FILE__).'/php_files/access_token.php', $res);
+        Util::setPhpFile($this->accessTokenFile, $res);
 
         return $res['access_token'];
     }
@@ -162,13 +163,15 @@ class Wechat
             'grant_type' => 'authorization_code'
         );
 
-        $r = Util::httpGet(self::API_SNS_OAUTH_INFO, $params);
+        $result = Util::httpGet(self::SNS_OAUTH_INFO, $params);
+
+        if (!$result) return false;
 
         if (isset($r['errcode'])) {
-            \Think\Log::record('[操作错误]获取微信网页授权失败: '.$r['errcode'].': '.$r['msg'], 'ERR');
-            $r = false;
+            Log::record('[获取微信网页授权失败]: '.$result['errcode'].': '.$result['msg'], 'ERR');
+            return false;
         }
 
-        return $r;
+        return $result;
     }
 }
