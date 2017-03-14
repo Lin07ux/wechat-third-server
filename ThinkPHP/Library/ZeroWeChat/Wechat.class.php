@@ -21,7 +21,12 @@ class Wechat
     /**
      * 获取网页授权信息
      */
-    const SNS_OAUTH_INFO   = 'https://api.weixin.qq.com/sns/oauth2/access_token';
+    const WEB_OAUTH_INFO = 'https://api.weixin.qq.com/sns/oauth2/access_token';
+
+    /**
+     * 网页授权的 URL
+     */
+    const WEB_OAUTH_URL = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=%s&redirect_uri=%s&response_type=code&scope=snsapi_%s&state=%s#wechat_redirect';
 
     /**
      * @var Wechat 该类的单例实例
@@ -43,6 +48,9 @@ class Wechat
      */
     private $token;
 
+    /**
+     * @var string 存储 access_token 的文件路径
+     */
     private $accessTokenFile = '/php_files/access_token.php';
 
     /**
@@ -145,6 +153,28 @@ class Wechat
     }
 
     /**
+     * 获取网页授权的 url
+     *
+     * @param string $redirect 授权后的回调 url
+     * @param string $scope    授权方式('base'、'userinfo')
+     * @param string $state    重定向后原样返回的信息([a-zA-Z0-9]{0,128})
+     *
+     * @return string
+     */
+    public function getOauthUrl($redirect, $scope, $state = '')
+    {
+        $state = $state ?: $scope;
+
+        return sprintf(
+            self::WEB_OAUTH_URL,
+            $this->appId,
+            urlencode($redirect),
+            $scope,
+            $state
+        );
+    }
+
+    /**
      * 获取网页授权的信息
      *
      * @param string $code 网页授权返回的code
@@ -154,7 +184,7 @@ class Wechat
      *       "refresh_token" => "REFRESH_TOKEN",
      *       "openid" => "OPENID", "scope" => "SCOPE"]
      */
-    public function snsOauth2($code)
+    public function getOauthResult($code)
     {
         $params = array(
             'appid'      => $this->appId,
@@ -163,12 +193,12 @@ class Wechat
             'grant_type' => 'authorization_code'
         );
 
-        $result = Util::httpGet(self::SNS_OAUTH_INFO, $params);
+        $result = Util::httpGet(self::WEB_OAUTH_INFO, $params);
 
         if (!$result) return false;
 
-        if (isset($r['errcode'])) {
-            Log::record('[获取微信网页授权失败]: '.$result['errcode'].': '.$result['msg'], 'ERR');
+        if (isset($result['errcode'])) {
+            Log::record('[获取微信网页授权失败]: '.json_encode($result), 'ERR');
             return false;
         }
 
