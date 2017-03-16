@@ -2,7 +2,6 @@
  * Created by Lin07ux on 2017/1/25.
  */
 
-Vue.config.devtools = true;
 Vue.http.options.emulateJSON = true;
 
 new Vue({

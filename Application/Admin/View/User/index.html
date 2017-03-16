@@ -1,13 +1,13 @@
 <layout name="Public/layout" />
 
 <div id="user" v-cloak>
-    <p class="bg-success">欢迎您，{$Think.session.user.name}</p>
+    <p class="bg-info">欢迎您，{$Think.session.user.name}</p>
 
     <button class="btn btn-secondary" @click.prevent="form.show = true">修改密码</button>
 
     <div class="fixed-form" v-show="form.show" @click.self="form.show = false">
         <form action="{:U('User/resetPwd')}" @submit.prevent="submit">
-            <h4 class="title">修改密码</h4>
+            <h4 class="text-center">修改密码</h4>
 
             <div class="form-group">
                 <label for="oldPwd">当前密码</label>
@@ -23,7 +23,7 @@
             </div>
 
             <div class="form-group text-center">
-                <button type="submit" class="btn btn-primary"> 提交</button>
+                <button type="submit" class="btn btn-primary">提交</button>
                 <button type="reset" class="btn btn-danger" @click="form.show = false">取消</button>
             </div>
         </form>

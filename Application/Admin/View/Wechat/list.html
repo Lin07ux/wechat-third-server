@@ -1,0 +1,180 @@
+<layout name="Public/layout" />
+
+<div class="main wx-article-list" id="articleList" v-cloak>
+    <ul class="nav nav-tabs" v-show="lists.length">
+        <li class="nav-item">
+            <span class="nav-link" :class="{ active: tab == 'lists'}" @click="tab = 'lists'">文章列表</span>
+        </li>
+        <li class="nav-item">
+            <span class="nav-link" :class="{ active: tab == 'detail'}" @click="tab = 'detail'">列表详情</span>
+        </li>
+    </ul>
+
+    <div class="tab-pane" v-show="tab == 'lists'">
+        <div class="row align-items-center dividing">
+            <span class="col">列表总数： {{ lists.length }}</span>
+            <button class="btn btn-primary" v-show="lists.length < limit" @click="addList">新建列表</button>
+        </div>
+
+        <table class="table table-hover table-center">
+            <thead>
+            <tr>
+                <th width="20">#</th>
+                <th width="250">列表名称</th>
+                <th width="240">列表链接</th>
+                <th width="190">操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-if="!lists.length">
+                <td colspan="4" class="text-muted text-center">暂无文章列表。可点击上方的“新建列表”进行添加。</td>
+            </tr>
+            <tr v-for="(list, index) in lists">
+                <th>{{ index + 1 }}</th>
+                <td>{{ list.name }}</td>
+                <td>{{ genListUrl(list.id) }}</td>
+                <td>
+                    <button class="btn btn-sm btn-secondary" @click="setCurList(list.id)">详情</button>
+                    <button class="btn btn-sm btn-info" @click="editList(list)">编辑</button>
+                    <button class="btn btn-sm btn-danger" @click="removeList(list, index)">删除</button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="fixed-form" v-show="showForm" @click.self="showForm = false">
+            <form method="post" @submit.prevent="submitList">
+                <h5 class="text-center">{{ form.id ? '编辑列表' : '新建列表' }}</h5>
+
+                <div class="form-group">
+                    <label for="name">列表名称</label>
+                    <input type="text" class="form-control" id="name" v-model="form.name" placeholder="设置列表的名称" required>
+                </div>
+
+                <div class="form-group text-center">
+                    <button type="submit" class="btn btn-primary">立即保存</button>
+                    <button type="button" class="btn btn-danger" @click="showForm = false">取消操作</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="tab-pane" v-show="tab == 'detail'">
+        <div class="row align-items-center dividing">
+            <div class="col">
+                <select class="form-control" v-model="curList">
+                    <option value="0">请选择文章列表</option>
+                    <option v-for="list in lists" :value="list.id">{{ list.name }}</option>
+                </select>
+            </div>
+            <div class="col text-center">
+                <button class="btn btn-primary" v-show="curList" @click="search.show = true">添加文章</button>
+            </div>
+            <div class="col text-right">
+                <span v-show="curList" class="text-muted">文章总数：{{ articles.total }}</span>
+            </div>
+        </div>
+
+        <div class="paging mb-2" v-if="articles.pages">
+            <button type="button" class="btn btn-secondary btn-sm" :disabled="articles.page <= 1" @click="prevPage">
+                <i class="fa fa-angle-double-left"></i>
+                上一页
+            </button>
+            <input type="number" class="form-control form-control-sm page" min="1" :max="articles.pages" v-model.number="articles.page" @keyup.enter="page">
+            /
+            <span>{{ articles.pages }}</span>
+            <button type="button" class="btn btn-secondary btn-sm" :disabled="articles.page >= articles.pages" @click="nextPage">
+                <i class="fa fa-angle-double-right"></i>
+                下一页
+            </button>
+        </div>
+
+        <div class="row justify-content-between articles">
+            <p v-if="!articles.total">该列表暂无文章！可点击上方的“添加文章”按钮进行搜索添加。</p>
+            <div class="card article" v-for="(article, index) in articles.lists">
+                <i class="fa fa-close" @click="delArticle(article, index)"></i>
+                <a :href="'article?edit=' + article.id">
+                    <p class="date">{{ article.publish_time }}</p>
+                    <h4 class="title">{{ article.title }}</h4>
+                    <div class="cover"><img :src="article.cover"></div>
+                    <p class="desc">{{ article.desc }}</p>
+                    <div class="link">
+                        阅读原文
+                        <i class="fa fa-angle-right"></i>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div class="paging" v-if="articles.pages">
+            <button type="button" class="btn btn-secondary btn-sm" :disabled="articles.page <= 1" @click="prevPage">
+                <i class="fa fa-angle-double-left"></i>
+                上一页
+            </button>
+            <input type="number" class="form-control form-control-sm page" min="1" :max="articles.pages" v-model.number="articles.page" @keyup.enter="page">
+            /
+            <span>{{ articles.pages }}</span>
+            <button type="button" class="btn btn-secondary btn-sm" :disabled="articles.page >= articles.pages" @click="nextPage">
+                <i class="fa fa-angle-double-right"></i>
+                下一页
+            </button>
+        </div>
+
+        <div class="modal show" v-show="search.show">
+            <div class="mask" @click="search.show = false"></div>
+            <div class="modal-dialog">
+                <div class="modal-content" :class="{ 'loading-after': search.searching }">
+                    <div class="modal-header">
+                        <h5 class="modal-title">选择文章</h5>
+                        <button type="button" class="close" @click="search.show = false">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <form method="get" class="input-group" @submit.prevent="searchArticle">
+                                <input class="form-control" type="text" v-model="search.text" placeholder="文章标题">
+                                <button type="submit" class="input-group-addon">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                            </form>
+
+                            <table class="table table-hover mt-2">
+                                <tbody>
+                                <tr v-for="(a, index) in search.results">
+                                    <td v-text="a.title"></td>
+                                    <td width="30">
+                                        <button type="button" class="btn btn-sm btn-secondary" @click="addArticle(a, index)">选择</button>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading bg-mask" v-show="loading">
+        <div class="wrap">
+            <img src="/Assets/images/loading.svg">
+            <small class="load-msg">{{ loadMsg }}</small>
+        </div>
+    </div>
+</div>
+
+
+<assign name="load_script[]" value="/Assets/js/admin/wechat/list.js" />
+<script>
+    var urls = {
+        lists: "{:U('ArticleList/lists')}",
+        handle: "{:U('ArticleList/handle')}",
+        remove: "{:U('ArticleList/remove')}",
+        articles: "{:U('ArticleListDetail/articles')}",
+        addArticle: "{:U('ArticleListDetail/add')}",
+        delArticle: "{:U('ArticleListDetail/remove')}",
+        search: "{:U('Article/search')}"
+    };
+</script>

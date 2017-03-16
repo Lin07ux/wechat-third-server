@@ -1,14 +1,19 @@
 ALTER TABLE `wts_menus` DROP FOREIGN KEY `fk_wts_menus_wts_reply_1`;
+ALTER TABLE `wts_article_list_detail` DROP FOREIGN KEY `fk_wts_article_list_detail_wts_article_lists_1`;
+ALTER TABLE `wts_article_list_detail` DROP FOREIGN KEY `fk_wts_article_list_detail_wts_articles_1`;
 
 DROP INDEX `unique_index_users_openid` ON `wts_users`;
 DROP INDEX `unique_index_users_phone` ON `wts_users`;
 DROP INDEX `index_wx_reply_type` ON `wts_reply`;
+DROP INDEX `unique_index_article_list_detail_list_article` ON `wts_article_list_detail`;
 
 DROP TABLE `wts_admin`;
 DROP TABLE `wts_users`;
 DROP TABLE `wts_reply`;
 DROP TABLE `wts_menus`;
 DROP TABLE `wts_articles`;
+DROP TABLE `wts_article_lists`;
+DROP TABLE `wts_article_list_detail`;
 
 CREATE TABLE `wts_admin` (
 	`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '管理员 ID',
@@ -90,14 +95,36 @@ CREATE TABLE `wts_articles` (
 	`thumb` varchar(255) NULL COMMENT '标题小图(用于多图文消息的右侧)',
 	`desc` varchar(255) NOT NULL COMMENT '文章描述',
 	`link` varchar(255) NULL COMMENT '文章外链URL',
-	`url` varchar(255) NULL COMMENT '文章的url',
 	`content` text NULL COMMENT '文章内容',
+	`publish_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '文章发布时间(可预设)',
 	`crt_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
 	`upd_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
 	PRIMARY KEY (`id`)
 )
 	COMMENT = '文章表';
 
+CREATE TABLE `wts_article_lists` (
+	`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '列表ID',
+	`name` varchar(255) NOT NULL COMMENT '列表名称',
+	`crt_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+	`upd_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+	PRIMARY KEY (`id`)
+)
+	COMMENT = '微信文章列表';
+
+CREATE TABLE `wts_article_list_detail` (
+	`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '文章ID',
+	`list` int(11) UNSIGNED NOT NULL COMMENT '所属文章列表的ID',
+	`article` int(11) UNSIGNED NOT NULL COMMENT '文章ID',
+	`crt_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+	`upd_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+	PRIMARY KEY (`id`) ,
+	UNIQUE INDEX `unique_index_article_list_detail_list_article` (`list` ASC, `article` ASC) COMMENT '文章列表ID与文章ID唯一索引'
+)
+	COMMENT = '微信文章列表和文章映射表';
+
 
 ALTER TABLE `wts_menus` ADD CONSTRAINT `fk_wts_menus_wts_reply_1` FOREIGN KEY (`reply`) REFERENCES `wts_reply` (`id`);
+ALTER TABLE `wts_article_list_detail` ADD CONSTRAINT `fk_wts_article_list_detail_wts_article_lists_1` FOREIGN KEY (`list`) REFERENCES `wts_article_lists` (`id`);
+ALTER TABLE `wts_article_list_detail` ADD CONSTRAINT `fk_wts_article_list_detail_wts_articles_1` FOREIGN KEY (`article`) REFERENCES `wts_articles` (`id`);
 

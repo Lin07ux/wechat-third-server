@@ -2,7 +2,6 @@
  * Created by Lin07ux on 2017/1/20.
  */
 
-Vue.config.devtools = true;
 Vue.http.options.emulateJSON = true;
 
 new Vue({
@@ -20,13 +19,18 @@ new Vue({
         showForm: false,
         form: {},
         current: {},
+        editArticle: edit || 0,
         editor: null,
         placeholder: '',
         loadCover: false,
         loadThumb: false
     },
     created: function () {
-        this.loadArticles();
+        if (this.editArticle > 0) {
+            this.edit(this.editArticle, true);
+        } else {
+            this.loadArticles();
+        }
     },
     mounted: function () {
         // 初始化文章内容编辑器
@@ -53,6 +57,11 @@ new Vue({
             this.ajaxGet(urls.lists, params, msg, function (data) {
                 Object.assign(self.articles, data);
             });
+        },
+
+        // 生产文章的前台访问URL
+        genArticleUrl: function (id) {
+            return window.location.origin + '/Article/' + id;
         },
 
         // 上一页
@@ -87,7 +96,8 @@ new Vue({
                 thumb: '',
                 desc: '',
                 link: '',
-                content: ''
+                content: '',
+                publish_time: ''
             }
         },
 
@@ -112,12 +122,19 @@ new Vue({
         },
 
         // 编辑文章
-        edit: function (article) {
-            this.current = article;
+        edit: function (article, isEditModel) {
+            var body;
+
+            if (isEditModel) {
+                body = { id: article };
+            } else {
+                this.current = article;
+                body = { id: article.id }
+            }
 
             var msg = '加载文章信息中...';
             var self = this;
-            this.ajaxGet(urls.detail, { id: article.id }, msg, function (data) {
+            this.ajaxGet(urls.detail, body, msg, function (data) {
                 self.form = data;
                 self.setContent(data.content);
                 self.showForm = true;
@@ -154,7 +171,7 @@ new Vue({
             }).catch(function () {
                 alert('网络故障，请稍后重试！');
             }).then(function () {
-                isCover ? (self.loadCover = true) : (self.loadThumb = true);
+                isCover ? (self.loadCover = false) : (self.loadThumb = false);
             });
         },
 
@@ -173,15 +190,13 @@ new Vue({
                 if (!form.link) return alert('请设置原文链接');
             }
 
-            var url = form.id ? urls.edit : urls.add;
             var self = this;
-            this.ajaxPost(url, form, '提交中...', function (data) {
-                if (form.id) {
+            this.ajaxPost(urls.handle, form, '提交中...', function (data) {
+                if (form.id > 0) {
                     Object.assign(self.current, form);
                     alert('更新文章成功');
                 } else {
-                    form.id = data.id;
-                    form.url = data.url;
+                    form.id = data;
 
                     var articles = self.articles;
                     articles.lists.unshift(Object.assign({}, form));
@@ -191,13 +206,27 @@ new Vue({
                     alert('添加文章成功');
                 }
 
-                self.showForm = false;
+                self.saveSuccess()
             });
+        },
+
+        // 保存成功之后根据当前是否是编辑模式而做不同的动作
+        saveSuccess: function () {
+            if (this.editArticle) {
+                if (window.history.length) {
+                    window.history.go(-1);
+                } else {
+                    window.location.href = 'index';
+                }
+            } else {
+                this.showForm = false;
+            }
         },
 
         // 删除文章
         remove: function (articleID, index) {
-            if (!confirm('确定要删除该文章吗？')) return false;
+            if (!confirm('确定要删除该文章吗？\n这将会从所有文章列表中删除该文章。'))
+                return false;
 
             var articles = this.articles;
             var msg = '删除中...';
@@ -206,6 +235,8 @@ new Vue({
 
                 articles.pages = Math.ceil(articles.total / articles.rows);
                 articles.lists.splice(index, 1);
+
+                alert('删除成功');
             });
         },
 

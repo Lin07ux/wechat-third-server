@@ -8,6 +8,21 @@
  */
 
 /**
+ * 检查是否是指定格式的日期时间字符串
+ *
+ * @param string $str    待检查的日期时间字符串
+ * @param string $format 预期格式
+ *
+ * @return bool
+ */
+function checkDatetime($str, $format="Y-m-d H:i:s"){
+    $unixTime  = strtotime($str);
+    $checkDate = date($format, $unixTime);
+
+    return $checkDate == $str;
+}
+
+/**
  * 获取当前域名
  *
  * @return string

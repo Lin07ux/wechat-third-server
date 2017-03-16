@@ -3,34 +3,34 @@
 <link rel="stylesheet" href="/Assets/wangEditor/wangEditor.min.css">
 
 <div class="wx-articles" id="articles" v-cloak>
-    <div class="lists" v-show="!showForm">
+    <div class="lists main main-lg" v-if="!editArticle" v-show="!showForm">
         <div class="row align-items-center dividing">
             <span class="col">所有文章 <small>(总数 {{ articles.total }})</small></span>
             <button class="btn btn-primary" @click="add">新建文章</button>
         </div>
 
-        <table class="table table-hover mt-4">
+        <table class="table table-hover table-center">
             <thead>
-            <tr class="row">
-                <th class="col-sm-1">#</th>
-                <th class="col-sm-4">文章标题</th>
-                <th class="col-sm-4">文章 URL</th>
-                <th class="col-sm-1">类型</th>
-                <th class="col-sm-2">操作</th>
+            <tr>
+                <th width="20">#</th>
+                <th width="250">文章标题</th>
+                <th width="240">文章 URL</th>
+                <th width="65">类型</th>
+                <th width="130">操作</th>
             </tr>
             </thead>
             <tbody>
             <tr v-if="!articles.total">
                 <td colspan="5" class="text-muted text-center">暂无文章。可点击上方的“新建文章”进行添加。</td>
             </tr>
-            <tr class="row" v-for="(article, index) in articles.lists">
-                <th class="col-sm-1">{{ index + 1 }}</th>
-                <td class="col-sm-4">{{ article.title }}</td>
-                <td class="col-sm-4 word-wrap">{{ article.url }}</td>
-                <td class="col-sm-1">{{ article.type > 0 ? '原创' : '外链' }}</td>
-                <td class="col-sm-2">
+            <tr v-for="(article, index) in articles.lists">
+                <th>{{ index + 1 }}</th>
+                <td>{{ article.title }}</td>
+                <td>{{ genArticleUrl(article.id) }}</td>
+                <td>{{ article.type > 0 ? '原创' : '外链' }}</td>
+                <td>
                     <button class="btn btn-sm btn-info" @click="edit(article)">编辑</button>
-                    <button class="btn btn-sm btn-danger" @click="remove(index)">删除</button>
+                    <button class="btn btn-sm btn-danger" @click="remove(article.id, index)">删除</button>
                 </td>
             </tr>
             </tbody>
@@ -51,13 +51,22 @@
         </div>
     </div>
 
-    <form class="main" method="post" v-show="showForm" @submit.prevent="submit">
+    <form class="main" method="post" v-show="editArticle || showForm" @submit.prevent="submit">
         <h3 class="form-title" v-text="form.id ? '编辑文章' : '新建文章'"></h3>
 
         <div class="form-group row">
             <label for="title" class="col-sm-2 col-form-label required">文章标题</label>
             <div class="col-sm-10">
                 <input type="text" class="form-control" id="title" v-model="form.title" placeholder="设置文章的标题" required>
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label for="publish" class="col-sm-2 col-form-label">发布时间</label>
+            <div class="col-sm-10">
+                <input class="form-control" id="publish" v-model="form.publish_time" placeholder="{:date('Y-m-d H:i:s')}">
+                <small class="form-text text-muted">文章的发布时间如果设置的小于当前时间时，用户访问文章列表时将不会看到该文章。</small>
+                <small class="form-text text-muted">可不设置，默认为当前保存的时间。</small>
             </div>
         </div>
 
@@ -78,7 +87,9 @@
                             :class="{ done: form.cover, uploading: loadCover }"
                             :style="{ 'background-image': 'url(' + form.cover + ')' }"
                         >
-                            <input type="file" class="absolute" accept="image/jpeg,image/jpg,image/png" @change="upload($event, true)">
+                            <label class="file-label absolute">
+                                <input type="file" class="hide" accept="image/jpeg,image/jpg,image/png" @change="upload($event, true)">
+                            </label>
                             <i class="fa fa-file-image-o" v-show="!form.cover"></i>
                         </div>
                         <small class="form-text text-center text-muted">封面大图</small>
@@ -90,7 +101,9 @@
                             :class="{ done: form.thumb, uploading: loadThumb }"
                             :style="{ 'background-image': 'url(' + form.thumb + ')' }"
                         >
-                            <input type="file" class="absolute" accept="image/jpeg,image/jpg,image/png" @change="upload($event)">
+                            <label class="file-label absolute">
+                                <input type="file" class="hide" accept="image/jpeg,image/jpg,image/png" @change="upload($event)">
+                            </label>
                             <i class="fa fa-file-image-o"  v-show="!form.thumb"></i>
                         </div>
                         <small class="form-text text-center text-muted">封面小图</small>
@@ -156,10 +169,10 @@
 <assign name="load_script[]" value="/Assets/wangEditor/wangEditor.min.js" />
 <assign name="load_script[]" value="/Assets/js/admin/wechat/articles.js" />
 <script>
+    var edit = +"{:I('get.edit')}";
     var urls = {
         lists: "{:U('Article/lists')}",
-        add: "{:U('Article/add')}",
-        edit: "{:U('Article/edit')}",
+        handle: "{:U('Article/handle')}",
         remove: "{:U('Article/remove')}",
         detail: "{:U('Article/detail')}",
         upload: "{:U('Article/upload')}"

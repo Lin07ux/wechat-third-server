@@ -30,6 +30,7 @@ class ArticlesModel extends Model
         ['cover', 'require', '请上传文章封面图片', 1],
         ['link', 'url', '文章链接需要设置为完整的url', 1, 'regex', 4],
         ['content', 'require', '请填写文章内容', 1, '',  5],
+        ['publish_time', 'checkDatetime', '请填写正确格式的文章发布时间', 0, 'function'],
     );
 
     /**
@@ -46,14 +47,14 @@ class ArticlesModel extends Model
         if ($page < 1) $page = 1;
         if ($rows < 1) $rows = 20;
 
-        $lists = $this->field('id,type,title,url')->order('id desc')
+        $lists = $this->field('id,type,title')->order('id desc')
             ->page($page, $rows)->select();
 
         // 如果查询失败或者不需要分页就直接返回查询结果
         if (!$paging) return $lists;
 
         $count = $lists ? count($lists) : 0;
-        if ($count < $rows && $count > 0) {
+        if (($count < $rows && $count > 0) || ($page == 1 && $count == 0)) {
             $total = ($page - 1) * $rows + $count;
         } else {
             $total = $this->count();
@@ -106,58 +107,30 @@ class ArticlesModel extends Model
             $data['link'] = '';
         }
 
+        if (isset($data['publish_time']) || !$data['publish_time'])
+            unset($data['publish_time']);
+
         return $this->create($data, (int)$data['type'] + 4);
     }
 
     /**
-     * 新增文章
+     * 新增或更新文章
      *
-     * @param array  $data   文章数据
-     * @param string $domain 域名(用于生成文章的 url)
+     * @param array  $data 文章数据
      *
      * @return array|bool
      */
-    public function addArticle(array $data, $domain)
+    public function addOrEdit(array $data)
     {
         $checked = $this->checkData($data);
 
         if (!$checked) return false;
 
-        $this->startTrans();
-
-        $id = $this->add($checked);
-        if ($id) {
-            $url = $domain . '/Article/' . $id;
-            $result = $this->where(['id' => $id])->setField('url', $url);
-
-            if ($result) {
-                $this->commit();
-
-                return ['id' => $id, 'url' => $url];
-            }
+        if (isset($data['id']) && $data['id'] > 0) {
+            return false !== $this->save($checked);
         }
 
-        $this->rollback();
-
-        return false;
-    }
-
-    /**
-     * 更新文章内容
-     *
-     * @param array $data 文字的内容数据
-     *
-     * @return bool
-     */
-    public function editArticle(array $data)
-    {
-        $checked = $this->checkData($data);
-
-        if (!$checked) return false;
-
-        unset($checked['url']);
-
-        return false !== $this->save($checked);
+        return $this->add($checked);
     }
 
     /**
@@ -169,7 +142,20 @@ class ArticlesModel extends Model
      */
     public function remove($id)
     {
-        return (bool)$this->where(['id' => $id])->delete();
+        $this->startTrans();
+
+        $result = M('ArticleListDetail')->where(['article' => $id])->delete();
+        if (false !== $result) {
+            $result = $this->where(['id' => $id])->delete();
+
+            if (false !== $result) {
+                $this->commit();
+                return true;
+            }
+        }
+
+        $this->rollback();
+        return false;
     }
 
     /**
@@ -189,9 +175,11 @@ class ArticlesModel extends Model
         $fields = 'id,title,desc,cover,thumb';
 
         if ($link) {
+            $url = get_domain() . '/Article/';
             $fields .= sprintf(
-                ', (CASE WHEN type = %d THEN `link` ELSE `url` END) AS link',
-                $this->type['link']
+                ', (CASE WHEN type = %d THEN `link` ELSE CONCAT(%s, `url`) END) AS link',
+                $this->type['link'],
+                $url
             );
         }
 
@@ -202,18 +190,26 @@ class ArticlesModel extends Model
     /**
      * 查询文章
      *
-     * @param string $title 查询的文章的标题
+     * @param string $title   查询的文章的标题
+     * @param bool   $forList 结果是否用于文章列表
      *
-     * @return mixed
+     * @return array
      */
-    public function search($title)
+    public function search($title, $forList = false)
     {
-        $title = trim($title);
-        $results =  $this->field('id,title,desc,cover,thumb')
-            ->where(['title' => ['like', "%{$title}%"]])
-            ->limit(10)->order('id desc')->select();
+        $fields = 'id,title,desc,cover';
+        if ($forList) {
+            $fields .= ',DATE_FORMAT(publish_time, "%Y年%m月%d日%H:%i") AS publish_time';
+        } else {
+            $fields .= ',thumb';
+        }
 
-        if (is_null($results)) $results = [];
+        $title = trim($title);
+
+        $results = $this->field($fields)->where(['title' => ['like', "%{$title}%"]])
+            ->limit(10)->order('upd_time desc, id desc')->select();
+
+        if (!$results) $results = [];
 
         return $results;
     }

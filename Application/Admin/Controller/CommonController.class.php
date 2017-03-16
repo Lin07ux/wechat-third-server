@@ -14,6 +14,15 @@ use Think\Controller;
 class CommonController extends Controller
 {
     /**
+     * @var array 需要进行拦截的操作列表
+     */
+    protected $actions = [
+        // action => (string)title
+        // 或如下,其中 title 表示页面标题, view 表示页面模板
+        // action => ['title' => title, 'view' => view]
+    ];
+
+    /**
      * @var int 登录会话有效期
      */
     protected $login_expiry = 1800;
@@ -74,9 +83,32 @@ class CommonController extends Controller
         if (IS_AJAX) {
             $this->ajaxReturn(['code' => 404, 'msg' => '请求的资源或操作不存在']);
         } else {
-            $this->display('Public/error404');
+            $this->assign('title', 'Not Found')->display('Public/error404');
         }
 
         exit();
+    }
+
+    /**
+     * 进行空action的拦截操作
+     *
+     * @param string $action 访问的action的名称
+     */
+    public function _empty($action)
+    {
+        $action = strtolower($action);
+
+        if (array_key_exists($action, $this->actions)) {
+            $value = $this->actions[$action];
+
+            if (is_array($value)) {
+                $this->assign('title', $value['title'])
+                    ->display($value['view']);
+            } else {
+                $this->assign('title', $value)->display($action);
+            }
+        } else {
+            $this->send404();
+        }
     }
 }

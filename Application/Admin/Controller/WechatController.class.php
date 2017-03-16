@@ -12,45 +12,12 @@ namespace Admin\Controller;
 
 class WechatController extends CommonController
 {
-    /**
-     * 公众号信息概览
-     */
-    public function index()
-    {
-        $this->assign('title', '微信信息概览')
-            ->display();
-    }
-
-    /**
-     * 微信菜单
-     */
-    public function menu()
-    {
-        $this->assign('title', '自定义菜单')->display();
-    }
-
-    /**
-     * 自动回复
-     */
-    public function reply()
-    {
-        $this->assign('title', '自动回复')->display();
-    }
-
-    /**
-     * 用户管理
-     */
-    public function user()
-    {
-        $this->assign('title', '用户管理')
-            ->display();
-    }
-
-    /**
-     * 文章管理
-     */
-    public function article()
-    {
-        $this->assign('title', '文章管理')->display();
-    }
+    protected $actions = [
+        'index' => '微信信息概览',
+        'menu'  => '自定义菜单',
+        'reply' => '自动回复',
+        'user'  => '用户管理',
+        'article' => '文章管理',
+        'list'  => '文章列表',
+    ];
 }

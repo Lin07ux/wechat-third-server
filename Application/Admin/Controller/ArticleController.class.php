@@ -89,7 +89,7 @@ class ArticleController extends CommonController
     /**
      * 添加文章信息
      */
-    public function add()
+    public function handle()
     {
         if (!IS_POST) $this->send404();
 
@@ -97,36 +97,19 @@ class ArticleController extends CommonController
         if (isset($data['content'])) $data['content'] = $_POST['content'];
 
         $Article = D('Articles');
-        $result = $Article->addArticle($data,  get_domain());
+        $result = $Article->addOrEdit($data);
+        $isEdit = isset($data['id']) && $data['id'] > 0;
 
         if ($result) {
-            $res = ['code' => 0, 'msg' => '添加文章成功', 'data' => $result];
+            if ($isEdit) {
+                $res = ['code' => 0, 'msg' => '更新文章信息成功',];
+            } else {
+                $res = ['code' => 0, 'msg' => '添加文章成功', 'data' => $result];
+            }
         } else {
             $err = $Article->getError();
-            $res = ['code' => 100, 'msg' => $err ?: '添加文章失败，请稍后重试。'];
-        }
-
-        $this->ajaxReturn($res);
-    }
-
-    /**
-     * 编辑文章信息
-     */
-    public function edit()
-    {
-        if (!IS_POST) $this->send404();
-
-        $data = I('post.');
-        if (isset($data['content'])) $data['content'] = $_POST['content'];
-
-        $Article = D('Articles');
-        $result = $Article->editArticle($data);
-
-        if ($result) {
-            $res = ['code' => 0, 'msg' => '更新文章信息成功',];
-        } else {
-            $err = $Article->getError();
-            $res = ['code' => 100, 'msg' => $err ?: '更新文章信息失败，请稍后重试。'];
+            $msg = $isEdit ? '更新文章信息失败，请稍后重试。' : '添加文章失败，请稍后重试。';
+            $res = ['code' => 100, 'msg' => $err ?: $msg];
         }
 
         $this->ajaxReturn($res);
@@ -146,7 +129,7 @@ class ArticleController extends CommonController
             $res = ['code' => 0, 'msg' => '删除成功',];
         } else {
             $err = $Article->getError();
-            $res = ['code' => 1501, 'msg' => $err ?: '删除失败，请稍后重试！'];
+            $res = ['code' => 104, 'msg' => $err ?: '删除失败，请稍后重试！'];
         }
 
         $this->ajaxReturn($res);
@@ -160,13 +143,8 @@ class ArticleController extends CommonController
         $keyword = I('get.keyword');
 
         if ($keyword) {
-            $articles = D('Articles')->search($keyword);
-
-            if ($articles) {
-                $res = ['code' => 0, 'msg' => '查询成功', 'data' => $articles];
-            } else {
-                $res = ['code' => 101, 'msg' => '查询失败，请稍后重试！'];
-            }
+            $articles = D('Articles')->search($keyword, I('get.list'));
+            $res = ['code' => 0, 'msg' => '查询成功', 'data' => $articles];
         } else {
             $res = ['code' => 10, 'msg' => '请提供搜索的关键词'];
         }

@@ -3,7 +3,7 @@
     <if condition="$c eq 'wechat'">
         <div class="header">
             <h3>微信管理</h3>
-            <article>在这里设置微信公众号的菜单、关键词回复、图文内容等。</article>
+            <article>在这里设置微信公众号的菜单、关键词回复、图文内容、文章列表等。</article>
         </div>
         <ul>
             <li class="{$a == 'menu' ? 'active' : ''}">
@@ -28,6 +28,12 @@
                 <a href="{:U('Wechat/article')}">
                     <i class="fa fa-file-text" aria-hidden="true"></i>
                     文章管理
+                </a>
+            </li>
+            <li class="{$a == 'list' ? 'active' : ''}">
+                <a href="{:U('Wechat/list')}">
+                    <i class="fa fa-indent" aria-hidden="true"></i>
+                    文章列表
                 </a>
             </li>
         </ul>
