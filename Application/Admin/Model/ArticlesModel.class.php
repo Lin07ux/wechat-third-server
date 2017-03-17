@@ -177,7 +177,7 @@ class ArticlesModel extends Model
         if ($link) {
             $url = get_domain() . '/Article/';
             $fields .= sprintf(
-                ', (CASE WHEN type = %d THEN `link` ELSE CONCAT(%s, `url`) END) AS link',
+                ', (CASE WHEN type = %d THEN `link` ELSE CONCAT("%s", `url`) END) AS link',
                 $this->type['link'],
                 $url
             );
