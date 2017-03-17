@@ -213,4 +213,21 @@ class ArticlesModel extends Model
 
         return $results;
     }
+
+    /**
+     * 检查文章类型是否是外链文章
+     *
+     * @param int  $typeOrId 文章的类型或ID
+     * @param bool $isType   第一个参数是否表示文章类型
+     *
+     * @return bool
+     */
+    public function isLink($typeOrId, $isType = true)
+    {
+        if ($isType) return $typeOrId == $this->type['link'];
+
+        $type = $this->where(['id' => $typeOrId])->getField('type');
+
+        return $type == $this->type['link'];
+    }
 }
