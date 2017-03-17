@@ -73,4 +73,16 @@ class ArticleListsModel extends Model
     {
         return (bool)$this->where(['id' => $id])->delete();
     }
+
+    /**
+     * 获取列表名称
+     *
+     * @param int $id 列表ID
+     *
+     * @return mixed
+     */
+    public function listName($id)
+    {
+        return $this->where(['id' => $id])->getField('name');
+    }
 }

@@ -28,8 +28,8 @@ class ArticleListDetailModel extends Model
 
         $lists = $this->alias('d')
             ->join('LEFT JOIN __ARTICLES__ a ON a.id = d.article')
-            ->field('a.id,a.title,a.cover,a.desc,d.id as detail,DATE_FORMAT(publish_time, "%Y年%m月%d日%H:%i") AS publish_time')
-            ->where($where)->order('d.id desc')
+            ->field('a.id,title,cover,desc,d.id as detail,DATE_FORMAT(publish_time, "%Y年%m月%d日%H:%i") AS publish_time')
+            ->where($where)->order('a.publish_time desc, d.id desc')
             ->page($page, $rows)->select();
 
         $count = $lists ? count($lists) : 0;

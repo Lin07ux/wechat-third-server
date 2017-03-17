@@ -1,0 +1,29 @@
+<layout name="Public/layout" />
+
+<main id="lists" class="article-list" v-cloak>
+    <div class="empty" v-if="!articles.total"><p>该列表暂无文章~</p></div>
+
+    <a class="article" v-for="article in articles.lists" :href="'/Article/' + article.id">
+        <p class="date">{{ article.publish_time }}</p>
+        <h4 class="title">{{ article.title }}</h4>
+        <div class="cover"><img :src="article.cover"></div>
+        <p class="desc">{{ article.desc }}</p>
+        <div class="link border-top arrow-right">阅读原文</div>
+    </a>
+
+    <div class="weui-loadmore" v-if="articles.lists.length < articles.total">
+        <i class="weui-loading"></i>
+        <span class="weui-loadmore__tips">加载更多</span>
+    </div>
+
+    <div class="weui-loadmore weui-loadmore_line" v-else>
+        <span class="weui-loadmore__tips">已无更多历史消息</span>
+    </div>
+</main>
+
+<assign name="load_script[]" value="/Assets/js/lib/vue.js" />
+<assign name="load_script[]" value="/Assets/js/lib/vue-resource.min.js" />
+<assign name="load_script[]" value="/Assets/js/home/article-list.js" />
+<script>
+    var articles = {:json_encode($articles, JSON_UNESCAPED_UNICODE)};
+</script>

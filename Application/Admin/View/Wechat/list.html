@@ -89,7 +89,7 @@
             </button>
         </div>
 
-        <div class="row justify-content-between articles">
+        <div class="row justify-content-between articles" v-show="curList > 0">
             <p v-if="!articles.total">该列表暂无文章！可点击上方的“添加文章”按钮进行搜索添加。</p>
             <div class="card article" v-for="(article, index) in articles.lists">
                 <i class="fa fa-close" @click="delArticle(article, index)"></i>
@@ -105,6 +105,8 @@
                 </a>
             </div>
         </div>
+
+        <p class="text-center mt-2"><small class="text-muted" v-show="curList > 0">列表中的文章将按照文章的发布时间倒叙排列。发布时间相同时将按照添加进列表的时间倒叙排列。</small></p>
 
         <div class="paging" v-if="articles.pages">
             <button type="button" class="btn btn-secondary btn-sm" :disabled="articles.page <= 1" @click="prevPage">

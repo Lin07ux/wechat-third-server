@@ -1,0 +1,58 @@
+*, ::after, ::before {-webkit-box-sizing:border-box;box-sizing:border-box}
+html,body,.fullscreen{position:relative;width:100%;height:100%;}
+.fullscreen{overflow:auto}
+
+
+[v-cloak], #think_page_trace_open{display:none!important;}
+
+/* 边框 */
+.border-top,.border-bottom{position:relative}
+.border-top:before,.border-bottom:after{
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-top: 1px solid #d8d8d8;
+    -webkit-transform: scaleY(0.5);
+    transform: scaleY(0.5);
+}
+.border-top:before{top:0}
+.border-bottom:after{bottom:0}
+
+/* 箭头 */
+.arrow-left,.arrow-right{position:relative}
+.arrow-left:before,.arrow-right:after{
+    content: "";
+    position: absolute;
+    display: block;
+    background: 0;
+    height: 6px;
+    width: 6px;
+    top: 50%;
+    border-color: #c7c7cc;
+    border-style: solid;
+    -webkit-transform: translateY(-50%) rotate(45deg);
+    -ms-transform: translateY(-50%) rotate(45deg);
+    transform: translateY(-50%) rotate(45deg);
+}
+.arrow-left:before{border-width: 2px 2px 0 0;left:5px}
+.arrow-right:after{border-width: 2px 2px 0 0;right:5px}
+
+/**********************
+ *  文章列表
+ *********************/
+.article-list{background-color:#ebebeb;padding:15px;font-size:14px;min-height:100%}
+.article-list .empty{text-align:center;color:#999;margin-top:10px}
+.article-list .article{display:block;margin-bottom:15px;padding:15px;word-wrap:break-word;word-break:break-all;background-color:#fff;border-radius:5px}
+.article-list .date{color:#7f7f7f;font-size:13px;line-height:19px;margin-bottom:15px}
+.article-list .title{font-size:18px;font-weight:700;color:#000;margin-bottom:0}
+.article-list .cover{height:150px;padding-top:15px;overflow:hidden}
+.article-list .cover img{width:100%}
+.article-list .desc{padding:15px 0;color:#9a9a9a;margin-bottom:0;font-size:14px}
+.article-list .link{padding:10px 0;font-size:14px;margin-bottom:-15px;color:#000}
+.article-list .weui-loadmore{margin:1.5em auto 0}
+.article-list .weui-loadmore_line{margin:2em auto -15px;border-color:#ccc}
+.article-list .weui-loadmore__tips{background-color:#ebebeb;color:#999}
+
+
+

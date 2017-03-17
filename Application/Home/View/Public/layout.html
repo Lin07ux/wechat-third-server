@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh_CN">
+<head>
+    <meta charset="UTF-8">
+    <title>{$title}</title>
+
+    <!-- Meta -->
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1,minimum-scale=1">
+
+    <!-- Common CSS -->
+    <link rel="stylesheet" href="/Assets/css/lib/normalize.min.css">
+    <link rel="stylesheet" href="/Assets/css/lib/weui.min.css">
+    <link rel="stylesheet" href="/Assets/css/home/common.css">
+</head>
+<body>
+
+    {__CONTENT__}
+
+    {// 加载各个页面自定义的脚本}
+    <notempty name="load_script">
+        <foreach name="load_script" item="script">
+            <script src="{$script}"></script>
+        </foreach>
+    </notempty>
+</body>
+</html>
