@@ -7,7 +7,7 @@
         <button class="btn" :class="addBtnClass" @click="addParentMenu" v-show="menus.length < 3">添加菜单</button>
     </div>
 
-    <button class="btn btn-primary float-right" v-show="menus.length" @click="publish">立即发布</button>
+    <button class="btn btn-primary float-right" @click="publish">立即发布</button>
 
     <p class="bg-warning mt-4" v-if="!menus.length && !showForm">暂未设置菜单。请点击上方的“添加菜单”按钮进行添加。</p>
 

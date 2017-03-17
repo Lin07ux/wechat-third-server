@@ -419,9 +419,15 @@ new Vue({
 
         // 发布菜单
         publish: function () {
-            if (!confirm('发布后会使用当前设置作为公众号的菜单设置。\n您确定要发布吗？')) return false;
+            if (!this.menus.length) {
+                $msg = '当前未设置菜单，发布后会清空公众号的自定义菜单。\n确定要清空吗？'
+            } else {
+                $msg = '发布后会使用当前设置作为公众号的菜单设置，并覆盖之前的设置。\n您确定要发布吗？';
+            }
 
-            this. ajaxPost(urls.publish, {}, '发布菜单中...', function (data, msg) {
+            if (!confirm($msg)) return false;
+
+            this.ajaxPost(urls.publish, {}, '发布菜单中...', function (data, msg) {
                 alert(msg);
             });
         },

@@ -19,6 +19,11 @@ class Menu extends Common
     const PUBLISH_URL = 'https://api.weixin.qq.com/cgi-bin/menu/create?access_token=%s';
 
     /**
+     * 删除菜单的 API
+     */
+    const DELETE_URL = 'https://api.weixin.qq.com/cgi-bin/menu/delete?access_token=%s';
+
+    /**
      * @var string 微信公众号的 access_token
      */
     private $access_token;
@@ -51,7 +56,9 @@ class Menu extends Common
     public function publish(array $data)
     {
         $menus = $this->formatData($data);
-        if (!$menus) return false;
+        if (false === $menus) return false;
+
+        if (!count($menus)) return $this->deleteMenus();
 
         $menus = json_encode(['button' => $menus], JSON_UNESCAPED_UNICODE);
         $url = sprintf(self::PUBLISH_URL, $this->access_token);
@@ -80,9 +87,11 @@ class Menu extends Common
      */
     protected function formatData(array $data)
     {
-        if (!is_array($data) || !count($data)) {
+        if (!is_array($data)) {
             $this->error = '缺少菜单数据。请先设置菜单。';
             return false;
+        } elseif (!count($data)) {
+            return [];
         }
 
         $menus = [];
@@ -116,5 +125,27 @@ class Menu extends Common
         }
 
         return $menus;
+    }
+
+    /**
+     * 删除菜单(全部)
+     *
+     * @return bool
+     */
+    protected function deleteMenus()
+    {
+        $url = sprintf(self::DELETE_URL, $this->access_token);
+        $result = Util::httpGet($url);
+
+        if (!$result) {
+            return false;
+        } elseif (array_key_exists('errcode', $result) && $result['errcode'] > 0) {
+            Log::record('[菜单删除失败]'.$result['errcode'].': '.$result['errmsg'], 'ERR');
+            $this->error = $result['errmsg'];
+
+            return false;
+        }
+
+        return true;
     }
 }
